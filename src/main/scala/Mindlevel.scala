@@ -9,9 +9,9 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import spray.json.DefaultJsonProtocol._
 import slick.jdbc.MySQLProfile.api._
 import com.typesafe.config._
+import net.mindlevel.models.Tables.{AccomplishmentRow, MissionRow, UserAccomplishmentRow, UserRow}
 
 import scala.io.StdIn
-
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -19,13 +19,11 @@ object Mindlevel {
   val conf = ConfigFactory.load()
   val db = Database.forConfig("db")
 
-  // domain model
-  final case class Item(name: String, id: Long)
-  final case class Order(items: List[Item])
-
   // formats for unmarshalling and marshalling
-  implicit val itemFormat = jsonFormat2(Item)
-  implicit val orderFormat = jsonFormat1(Order)
+  implicit val itemFormat = jsonFormat7(AccomplishmentRow)
+  implicit val missionFormat = jsonFormat7(MissionRow)
+  implicit val userFormat = jsonFormat7(UserRow)
+  implicit val userAccomplishmentFormat = jsonFormat2(UserAccomplishmentRow)
 
   // (fake) async database query api
   //def fetchItem(itemId: Long): Future[Option[Item]] = Future(Some(Item("name", 123)))
