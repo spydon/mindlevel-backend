@@ -10,9 +10,7 @@ import com.typesafe.config._
 import net.mindlevel.models.Tables.{AccomplishmentRow, MissionRow, UserRow}
 import net.mindlevel.models.Tables.{Accomplishment, Mission, User}
 import spray.json.{DeserializationException, JsNumber, JsValue, JsonFormat}
-
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import com.github.t3hnar.bcrypt._
 
 object Routes {
   private val conf = ConfigFactory.load()
@@ -87,16 +85,16 @@ object Routes {
         get {
           complete(db.run(Mission.result))
         } ~
-        post {
-          entity(as[MissionRow]) { mission =>
-            val nonValidatedMission = mission.copy(validated = false)
-            val maybeInserted = db.run(Mission += nonValidatedMission)
-            onSuccess(maybeInserted) {
-              case 1 => complete(StatusCodes.OK)
-              case _ => complete(StatusCodes.BadRequest)
+          post {
+            entity(as[MissionRow]) { mission =>
+              val nonValidatedMission = mission.copy(validated = false)
+              val maybeInserted = db.run(Mission += nonValidatedMission)
+              onSuccess(maybeInserted) {
+                case 1 => complete(StatusCodes.OK)
+                case _ => complete(StatusCodes.BadRequest)
+              }
             }
           }
-        }
       } ~
         path(IntNumber) { id =>
           get {
@@ -131,15 +129,29 @@ object Routes {
     }
 
   private val userRoute =
-    get {
-      pathPrefix("user" / Segment) { username =>
-        val maybeUser = db.run(User.filter(_.username === username).result.headOption)
-
-        onSuccess(maybeUser) {
-          case Some(user) => complete(user)
-          case None => complete(StatusCodes.NotFound)
+    pathPrefix("user") {
+      pathEndOrSingleSlash {
+        post {
+          entity(as[UserRow]) { user =>
+            val processedUser = user.copy(password = user.password.bcrypt)
+            val maybeInserted = db.run(User += processedUser)
+            onSuccess(maybeInserted) {
+              case 1 => complete(StatusCodes.OK)
+              case _ => complete(StatusCodes.BadRequest)
+            }
+          }
         }
-      }
+      } ~
+        path(Segment) { username =>
+          get {
+            val maybeUser = db.run(User.filter(_.username === username).result.headOption)
+
+            onSuccess(maybeUser) {
+              case Some(user) => complete(user)
+              case None => complete(StatusCodes.NotFound)
+            }
+          }
+        }
     }
 
   def all: Route = accomplishmentRoute ~ missionRoute ~ userRoute
