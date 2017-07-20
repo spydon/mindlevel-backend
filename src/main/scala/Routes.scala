@@ -5,10 +5,9 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import spray.json.DefaultJsonProtocol._
-import slick.jdbc.MySQLProfile.api._
-import com.typesafe.config._
-import net.mindlevel.models.Tables.{Accomplishment, AccomplishmentRow, Mission, MissionRow, User, UserAccomplishment, UserAccomplishmentRow, UserRow}
 import spray.json.{DeserializationException, JsNumber, JsValue, JsonFormat}
+import slick.jdbc.MySQLProfile.api._
+import net.mindlevel.models.Tables._
 import com.github.t3hnar.bcrypt._
 
 import scala.concurrent.Future
@@ -29,12 +28,17 @@ object Routes {
   }
 
   // Formats for unmarshalling and marshalling
-  private case class LoginFormat(username: String, password: Option[String] = None, session: Option[String] = None)
+  private case class LoginFormat(
+     username: String,
+     password: Option[String] = None,
+     newPassword: Option[String] = None,
+     session: Option[String] = None
+  )
   private implicit val accomplishmentFormat = jsonFormat7(AccomplishmentRow)
   private implicit val missionFormat = jsonFormat7(MissionRow)
   private implicit val userFormat = jsonFormat7(UserRow)
   private implicit val userAccomplishmentFormat = jsonFormat2(UserAccomplishmentRow)
-  private implicit val loginFormat = jsonFormat3(LoginFormat)
+  private implicit val loginFormat = jsonFormat4(LoginFormat)
 
   private case class SessionUpdateException(msg: String, cause: Throwable = null) extends RuntimeException(msg, cause)
 
@@ -191,7 +195,28 @@ object Routes {
                 case Some(user) => complete(user)
                 case None => complete(StatusCodes.NotFound)
               }
-            }
+            } ~
+              put {
+                entity(as[UserRow]) { user =>
+                  onSuccess(isAuthorized(user.username, user.session.getOrElse(""))) {
+                    case true =>
+                      val q = for {u <- User if u.username === user.username} yield (u.description, u.image)
+                      val maybeUpdated = db.run(q.update(user.description, user.image))
+
+                      onSuccess(maybeUpdated) {
+                        case 1 => complete(StatusCodes.OK)
+                        case _ => complete(StatusCodes.BadRequest)
+                      }
+                    case false =>
+                      complete(StatusCodes.Unauthorized)
+                  }
+                } ~
+                entity(as[LoginFormat]) { user =>
+                  onSuccess(updatePassword(user)) { session =>
+                    complete(session)
+                  }
+                }
+              }
           } ~
             path("accomplishment") {
               get {
@@ -226,6 +251,52 @@ object Routes {
           }
         }
       }
+
+  private def isAuthorized(username: String, session: String): Future[Boolean] = {
+    val maybeUser = db.run {
+      User
+        .filter(user => user.username === username && user.session === session)
+        .result.headOption
+    }
+    maybeUser.map {
+      case Some(_) => true
+      case None => false
+    }
+  }
+
+  private def updatePassword(user: LoginFormat): Future[String] = {
+     // Rewrite as transaction, could potentially cause race conditions or timing attacks
+    val maybeUser = db.run {
+      User
+        .filter(_.username === user.username)
+        .result.headOption
+    }
+
+    maybeUser flatMap {
+      case Some(foundUser) =>
+        if (user.session == foundUser.session && user.password.getOrElse("").isBcrypted(foundUser.password)) {
+          val q = for (u <- User if u.username === foundUser.username) yield (u.password, u.session)
+          val newSession = Some(Random.alphanumeric.take(64).mkString)
+          user.newPassword match {
+            case Some(password) =>
+              val hashedPassword = password.bcrypt
+              val maybeUpdated = db.run(q.update(hashedPassword, newSession))
+              maybeUpdated.map {
+                case 1 => newSession.get
+                case _ => throw SessionUpdateException(s"Could not update the session")
+              }
+            case None =>
+              throw SessionUpdateException(s"Could not update the session")
+          }
+
+        } else {
+          // Not authorized
+          throw SessionUpdateException("Could not update the session")
+        }
+      case None =>
+        throw SessionUpdateException("Could not update the session")
+    }
+  }
 
   private def updateSession(user: LoginFormat, logout: Boolean = false): Future[Option[String]] = {
     // Rewrite as transaction, could potentially cause race conditions or timing attacks
