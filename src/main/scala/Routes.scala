@@ -33,33 +33,59 @@ object Routes {
   private implicit val userFormat = jsonFormat7(UserRow)
 
   private val accomplishmentRoute =
-    get {
-      pathPrefix("accomplishment" / IntNumber) { id =>
-        val maybeAccomplishment = db.run(Accomplishment.filter(_.id === id).result.headOption)
-
-        onSuccess(maybeAccomplishment) {
-          case Some(accomplishment) => complete(accomplishment)
-          case None => complete(StatusCodes.NotFound)
+    pathPrefix("accomplishment") {
+      pathEndOrSingleSlash {
+        get {
+          complete(db.run(Accomplishment.result))
         }
-      }
-    } // ~
-  // post {
-  //   path("create-order") {
-  //     entity(as[Order]) { order =>
-  //       //val saved: Future[Done] = saveOrder(order)
-  //       val saved: Future[Done] = Future(Done)
-  //       onComplete(saved) { done =>
-  //         complete("order created")
-  //       }
-  //     }
-  //   }
-  // }
+      } ~
+        path(IntNumber) { id =>
+          get {
+            val maybeAccomplishment = db.run(Accomplishment.filter(_.id === id).result.headOption)
+
+            onSuccess(maybeAccomplishment) {
+              case Some(accomplishment) => complete(accomplishment)
+              case None => complete(StatusCodes.NotFound)
+            }
+          }
+        } ~
+        path(Segment) { range =>
+          get {
+            if (range.contains("-")) {
+              val between = range.split("-")
+              val lower = between(0).toInt
+              val upper = between(1).toInt
+              val accomplishments = db.run(Accomplishment.filter(_.id >= lower).filter(_.id <= upper).result)
+              complete(accomplishments)
+            } else if (range.contains(",")) {
+              val ids = range.split(",").map(_.toInt)
+              val query = for {
+                m <- Accomplishment if m.id inSetBind ids
+              } yield m
+              val accomplishments = db.run(query.result)
+              complete(accomplishments)
+            } else {
+              complete(StatusCodes.BadRequest)
+            }
+          }
+        }
+    }
 
   private val missionRoute =
     pathPrefix("mission") {
       pathEndOrSingleSlash {
         get {
           complete(db.run(Mission.result))
+        } ~
+        post {
+          entity(as[MissionRow]) { mission =>
+            val nonValidatedMission = mission.copy(validated = false)
+            val maybeInserted = db.run(Mission += nonValidatedMission)
+            onSuccess(maybeInserted) {
+              case 1 => complete(StatusCodes.OK)
+              case _ => complete(StatusCodes.BadRequest)
+            }
+          }
         }
       } ~
         path(IntNumber) { id =>
