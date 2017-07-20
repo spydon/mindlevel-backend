@@ -12,6 +12,10 @@ import net.mindlevel.models.Tables.{Accomplishment, Mission, User}
 import spray.json.{DeserializationException, JsNumber, JsValue, JsonFormat}
 import com.github.t3hnar.bcrypt._
 
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Random
+
 object Routes {
   private val conf = ConfigFactory.load()
   private val db = Database.forConfig("db")
@@ -26,9 +30,13 @@ object Routes {
   }
 
   // Formats for unmarshalling and marshalling
+  private case class LoginFormat(username: String, password: String, session: String)
   private implicit val accomplishmentFormat = jsonFormat7(AccomplishmentRow)
   private implicit val missionFormat = jsonFormat7(MissionRow)
   private implicit val userFormat = jsonFormat7(UserRow)
+  private implicit val loginFormat = jsonFormat3(LoginFormat)
+
+  case class SessionUpdateException(msg: String, cause: Throwable = null) extends RuntimeException(msg, cause)
 
   private val accomplishmentRoute =
     pathPrefix("accomplishment") {
@@ -154,6 +162,54 @@ object Routes {
         }
     }
 
-  def all: Route = accomplishmentRoute ~ missionRoute ~ userRoute
+  private def updateSession(user: LoginFormat, logout: Boolean = false): Future[Option[String]] = {
+    // Rewrite as transaction, could potentially cause race conditions or timing attacks
+    val maybeUser = db.run {
+      User
+        .filter(_.username === user.username)
+        .result.headOption
+    }
+
+    maybeUser flatMap {
+      case Some(foundUser) =>
+        if (foundUser.session.contains(user.session) || user.password.isBcrypted(foundUser.password)) {
+          val currentSession = for (u <- User if u.username === foundUser.username) yield u.session
+          val newSession = if (logout) None else Some(Random.alphanumeric.take(64).mkString)
+          val maybeUpdated = db.run(currentSession.update(newSession))
+          maybeUpdated.map {
+            case 1 => newSession
+            case _ => throw SessionUpdateException(s"Could not update the session")
+          }
+        } else {
+          throw SessionUpdateException("Could not update the session")
+        }
+      case None =>
+        throw SessionUpdateException("Could not update the session")
+    }
+  }
+
+  private val loginRoute =
+    path("login") {
+      post {
+        entity(as[LoginFormat]) { login =>
+          onSuccess(updateSession(login)) {
+            case Some(session) => complete(session)
+            case None => complete(StatusCodes.Unauthorized)
+          }
+        }
+      }
+    } ~
+      path("logout") {
+        post {
+          entity(as[LoginFormat]) { login =>
+            onSuccess(updateSession(login, true)) {
+              case None => complete(StatusCodes.OK)
+              case _ => complete(StatusCodes.InternalServerError)
+            }
+          }
+        }
+      }
+
+  def all: Route = accomplishmentRoute ~ missionRoute ~ userRoute ~ loginRoute
 
 }
