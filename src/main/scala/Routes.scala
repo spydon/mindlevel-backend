@@ -17,6 +17,7 @@ import scala.util.Random
 
 object Routes {
   private val db = Database.forConfig("db")
+  private val accomplishmentPageSize = 20
 
   private implicit object TimestampFormat extends JsonFormat[Timestamp] {
     def write(obj: Timestamp): JsNumber = JsNumber(obj.getTime)
@@ -54,6 +55,38 @@ object Routes {
           }
         }
       } ~
+        pathPrefix("latest") {
+          pathEndOrSingleSlash {
+            get {
+              val accomplishments = db.run(Accomplishment.sortBy(_.created.desc).take(accomplishmentPageSize).result)
+              complete(accomplishments)
+            }
+          } ~
+          path(IntNumber) { pageSize =>
+            get {
+              val accomplishments = db.run(Accomplishment.sortBy(_.created.desc).take(pageSize).result)
+              complete(accomplishments)
+            }
+          } ~
+          path(Segment) { range =>
+            get {
+              if (range.contains("-")) {
+                val between = range.split("-")
+                val drop = between(0).toInt-1
+                val upper = between(1).toInt
+                val take = upper-drop
+                if (drop < upper) {
+                  val accomplishments = db.run(Accomplishment.sortBy(_.created.desc).drop(drop).take(take).result)
+                  complete(accomplishments)
+                } else {
+                  complete(StatusCodes.BadRequest)
+                }
+              } else {
+                complete(StatusCodes.BadRequest)
+              }
+            }
+          }
+        } ~
         path(IntNumber) { id =>
           get {
             val maybeAccomplishment = db.run(Accomplishment.filter(_.id === id).result.headOption)
