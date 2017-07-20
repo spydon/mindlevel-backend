@@ -34,11 +34,16 @@ object Routes {
      newPassword: Option[String] = None,
      session: Option[String] = None
   )
+  private case class ContributorRequest(
+     usernames: Seq[String],
+     session: String
+  )
   private implicit val accomplishmentFormat = jsonFormat7(AccomplishmentRow)
   private implicit val missionFormat = jsonFormat7(MissionRow)
   private implicit val userFormat = jsonFormat7(UserRow)
   private implicit val userAccomplishmentFormat = jsonFormat2(UserAccomplishmentRow)
   private implicit val loginFormat = jsonFormat4(LoginFormat)
+  private implicit val contributorRequestFormat = jsonFormat2(ContributorRequest)
 
   private case class SessionUpdateException(msg: String, cause: Throwable = null) extends RuntimeException(msg, cause)
 
@@ -105,38 +110,35 @@ object Routes {
             get {
               onSuccess(maybeAccomplishment) {
                 case Some(accomplishment) =>
-                  //val q = for {ua <- UserAccomplishment if ua.accomplishmentId === accomplishment.id} yield u.username
-                  //val contributors = db.run(q.result)
                   val contributors =
                     db.run(UserAccomplishment.filter(_.accomplishmentId === accomplishment.id).map(_.username).result)
                   onSuccess(contributors)(complete(_))
               }
             } ~
               post {
-                entity(as[String]) { username =>
+                entity(as[ContributorRequest]) { request =>
                   onSuccess(maybeAccomplishment) {
                     case Some(_) =>
-                      val userAccomplishmentRow = UserAccomplishmentRow(username, id)
-                      val maybeInserted = db.run(UserAccomplishment += userAccomplishmentRow)
-                      onSuccess(maybeInserted) {
-                        case 1 => complete(StatusCodes.OK)
-                        case _ => complete(StatusCodes.BadRequest)
+                      onSuccess(nameFromSession(request.session)) {
+                        case Some(requestor) =>
+                          val isAuthorized = db.run(UserAccomplishment
+                            .filter(_.username === requestor)
+                            .filter(_.accomplishmentId === id).result.headOption)
+                          onSuccess(isAuthorized) {
+                            case Some(_) =>
+                              val userAccomplishmentRows = request.usernames.map(UserAccomplishmentRow(_, id))
+                              val maybeInserted = db.run(UserAccomplishment ++= userAccomplishmentRows)
+                              onSuccess(maybeInserted) {
+                                case Some(_) => complete(StatusCodes.OK)
+                                case None => complete(StatusCodes.BadRequest)
+                              }
+                            case None => complete(StatusCodes.Unauthorized)
+                          }
+                        case None => complete(StatusCodes.BadRequest)
                       }
                     case None => complete(StatusCodes.NotFound)
                   }
-                } ~
-                  entity(as[Seq[String]]) { usernames =>
-                    onSuccess(maybeAccomplishment) {
-                      case Some(_) =>
-                        val userAccomplishmentRows = usernames.map(UserAccomplishmentRow(_, id))
-                        val maybeInserted = db.run(UserAccomplishment ++= userAccomplishmentRows)
-                        onSuccess(maybeInserted) {
-                          case Some(_) => complete(StatusCodes.OK)
-                          case None => complete(StatusCodes.BadRequest)
-                        }
-                      case None => complete(StatusCodes.NotFound)
-                    }
-                  }
+                }
               }
           }
         } ~
@@ -290,6 +292,10 @@ object Routes {
           }
         }
       }
+
+  private def nameFromSession(session: String) = {
+    db.run(User.filter(_.session === session).map(_.username).result.headOption)
+  }
 
   private def isAuthorized(username: String, session: String): Future[Boolean] = {
     val maybeUser = db.run {
