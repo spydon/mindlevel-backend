@@ -16,27 +16,26 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 
 object Routes {
-  private val conf = ConfigFactory.load()
   private val db = Database.forConfig("db")
 
-  implicit object TimestampFormat extends JsonFormat[Timestamp] {
-    def write(obj: Timestamp) = JsNumber(obj.getTime)
+  private implicit object TimestampFormat extends JsonFormat[Timestamp] {
+    def write(obj: Timestamp): JsNumber = JsNumber(obj.getTime)
 
-    def read(json: JsValue) = json match {
+    def read(json: JsValue): Timestamp = json match {
       case JsNumber(time) => new Timestamp(time.toLong)
       case _ => throw DeserializationException("Timestamp expected")
     }
   }
 
   // Formats for unmarshalling and marshalling
-  private case class LoginFormat(username: String, password: String, session: String)
+  private case class LoginFormat(username: String, password: Option[String] = None, session: Option[String] = None)
   private implicit val accomplishmentFormat = jsonFormat7(AccomplishmentRow)
   private implicit val missionFormat = jsonFormat7(MissionRow)
   private implicit val userFormat = jsonFormat7(UserRow)
   private implicit val userAccomplishmentFormat = jsonFormat2(UserAccomplishmentRow)
   private implicit val loginFormat = jsonFormat3(LoginFormat)
 
-  case class SessionUpdateException(msg: String, cause: Throwable = null) extends RuntimeException(msg, cause)
+  private case class SessionUpdateException(msg: String, cause: Throwable = null) extends RuntimeException(msg, cause)
 
   private val accomplishmentRoute =
     pathPrefix("accomplishment") {
@@ -205,7 +204,7 @@ object Routes {
 
     maybeUser flatMap {
       case Some(foundUser) =>
-        if (foundUser.session.contains(user.session) || user.password.isBcrypted(foundUser.password)) {
+        if (user.session == foundUser.session || user.password.getOrElse("").isBcrypted(foundUser.password)) {
           val currentSession = for (u <- User if u.username === foundUser.username) yield u.session
           val newSession = if (logout) None else Some(Random.alphanumeric.take(64).mkString)
           val maybeUpdated = db.run(currentSession.update(newSession))
@@ -214,6 +213,7 @@ object Routes {
             case _ => throw SessionUpdateException(s"Could not update the session")
           }
         } else {
+          // Not authorized
           throw SessionUpdateException("Could not update the session")
         }
       case None =>
