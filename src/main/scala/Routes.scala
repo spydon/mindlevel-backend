@@ -91,14 +91,53 @@ object Routes {
             }
           }
         } ~
-        path(IntNumber) { id =>
-          get {
-            val maybeAccomplishment = db.run(Accomplishment.filter(_.id === id).result.headOption)
-
-            onSuccess(maybeAccomplishment) {
-              case Some(accomplishment) => complete(accomplishment)
-              case None => complete(StatusCodes.NotFound)
+        pathPrefix(IntNumber) { id =>
+          val maybeAccomplishment = db.run(Accomplishment.filter(_.id === id).result.headOption)
+          pathEndOrSingleSlash {
+            get {
+              onSuccess(maybeAccomplishment) {
+                case Some(accomplishment) => complete(accomplishment)
+                case None => complete(StatusCodes.NotFound)
+              }
             }
+          } ~
+          path("contributor") {
+            get {
+              onSuccess(maybeAccomplishment) {
+                case Some(accomplishment) =>
+                  //val q = for {ua <- UserAccomplishment if ua.accomplishmentId === accomplishment.id} yield u.username
+                  //val contributors = db.run(q.result)
+                  val contributors =
+                    db.run(UserAccomplishment.filter(_.accomplishmentId === accomplishment.id).map(_.username).result)
+                  onSuccess(contributors)(complete(_))
+              }
+            } ~
+              post {
+                entity(as[String]) { username =>
+                  onSuccess(maybeAccomplishment) {
+                    case Some(_) =>
+                      val userAccomplishmentRow = UserAccomplishmentRow(username, id)
+                      val maybeInserted = db.run(UserAccomplishment += userAccomplishmentRow)
+                      onSuccess(maybeInserted) {
+                        case 1 => complete(StatusCodes.OK)
+                        case _ => complete(StatusCodes.BadRequest)
+                      }
+                    case None => complete(StatusCodes.NotFound)
+                  }
+                } ~
+                  entity(as[Seq[String]]) { usernames =>
+                    onSuccess(maybeAccomplishment) {
+                      case Some(_) =>
+                        val userAccomplishmentRows = usernames.map(UserAccomplishmentRow(_, id))
+                        val maybeInserted = db.run(UserAccomplishment ++= userAccomplishmentRows)
+                        onSuccess(maybeInserted) {
+                          case Some(_) => complete(StatusCodes.OK)
+                          case None => complete(StatusCodes.BadRequest)
+                        }
+                      case None => complete(StatusCodes.NotFound)
+                    }
+                  }
+              }
           }
         } ~
         path(Segment) { range =>
