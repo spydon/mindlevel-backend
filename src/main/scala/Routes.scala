@@ -7,8 +7,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import spray.json.DefaultJsonProtocol._
 import slick.jdbc.MySQLProfile.api._
 import com.typesafe.config._
-import net.mindlevel.models.Tables.{AccomplishmentRow, MissionRow, UserRow}
-import net.mindlevel.models.Tables.{Accomplishment, Mission, User}
+import net.mindlevel.models.Tables.{Accomplishment, AccomplishmentRow, Mission, MissionRow, User, UserAccomplishment, UserAccomplishmentRow, UserRow}
 import spray.json.{DeserializationException, JsNumber, JsValue, JsonFormat}
 import com.github.t3hnar.bcrypt._
 
@@ -34,6 +33,7 @@ object Routes {
   private implicit val accomplishmentFormat = jsonFormat7(AccomplishmentRow)
   private implicit val missionFormat = jsonFormat7(MissionRow)
   private implicit val userFormat = jsonFormat7(UserRow)
+  private implicit val userAccomplishmentFormat = jsonFormat2(UserAccomplishmentRow)
   private implicit val loginFormat = jsonFormat3(LoginFormat)
 
   case class SessionUpdateException(msg: String, cause: Throwable = null) extends RuntimeException(msg, cause)
@@ -150,17 +150,50 @@ object Routes {
           }
         }
       } ~
-        path(Segment) { username =>
-          get {
-            val maybeUser = db.run(User.filter(_.username === username).result.headOption)
+        pathPrefix(Segment) { username =>
+          pathEndOrSingleSlash {
+            get {
+              val maybeUser = db.run(User.filter(_.username === username).result.headOption)
 
-            onSuccess(maybeUser) {
-              case Some(user) => complete(user)
-              case None => complete(StatusCodes.NotFound)
+              onSuccess(maybeUser) {
+                case Some(user) => complete(user)
+                case None => complete(StatusCodes.NotFound)
+              }
+            }
+          } ~
+            path("accomplishment") {
+              get {
+                val accomplishments = db.run(UserAccomplishment.filter(_.username === username).flatMap( ua =>
+                  Accomplishment.filter(_.id === ua.accomplishmentId)
+                ).result)
+
+                onSuccess(accomplishments)(complete(_))
+              }
+            }
+        }
+    }
+
+  private val loginRoute =
+    path("login") {
+      post {
+        entity(as[LoginFormat]) { login =>
+          onSuccess(updateSession(login)) {
+            case Some(session) => complete(session)
+            case None => complete(StatusCodes.Unauthorized)
+          }
+        }
+      }
+    } ~
+      path("logout") {
+        post {
+          entity(as[LoginFormat]) { login =>
+            onSuccess(updateSession(login, true)) {
+              case None => complete(StatusCodes.OK)
+              case _ => complete(StatusCodes.InternalServerError)
             }
           }
         }
-    }
+      }
 
   private def updateSession(user: LoginFormat, logout: Boolean = false): Future[Option[String]] = {
     // Rewrite as transaction, could potentially cause race conditions or timing attacks
@@ -187,28 +220,6 @@ object Routes {
         throw SessionUpdateException("Could not update the session")
     }
   }
-
-  private val loginRoute =
-    path("login") {
-      post {
-        entity(as[LoginFormat]) { login =>
-          onSuccess(updateSession(login)) {
-            case Some(session) => complete(session)
-            case None => complete(StatusCodes.Unauthorized)
-          }
-        }
-      }
-    } ~
-      path("logout") {
-        post {
-          entity(as[LoginFormat]) { login =>
-            onSuccess(updateSession(login, true)) {
-              case None => complete(StatusCodes.OK)
-              case _ => complete(StatusCodes.InternalServerError)
-            }
-          }
-        }
-      }
 
   def all: Route = accomplishmentRoute ~ missionRoute ~ userRoute ~ loginRoute
 
