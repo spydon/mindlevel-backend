@@ -38,6 +38,16 @@ object Routes {
         get {
           complete(db.run(Accomplishment.result))
         }
+        post {
+          entity(as[AccomplishmentRow]) { accomplishment =>
+            val zeroScoreAccomplishment = accomplishment.copy(score = 0)
+            val maybeInserted = db.run(Accomplishment += zeroScoreAccomplishment)
+            onSuccess(maybeInserted) {
+              case 1 => complete(StatusCodes.OK)
+              case _ => complete(StatusCodes.BadRequest)
+            }
+          }
+        }
       } ~
         path(IntNumber) { id =>
           get {
