@@ -1,4 +1,4 @@
-package routes
+package net.mindlevel.routes
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes

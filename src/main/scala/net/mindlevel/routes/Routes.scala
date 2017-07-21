@@ -1,7 +1,7 @@
-package routes
+package net.mindlevel.routes
 
-import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
 
 object Routes {
   private val routes = Seq(AccomplishmentRoute, LoginRoute, MissionRoute, UserRoute)

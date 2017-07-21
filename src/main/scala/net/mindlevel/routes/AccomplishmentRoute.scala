@@ -1,4 +1,4 @@
-package routes
+package net.mindlevel.routes
 
 import java.nio.file.Paths
 
@@ -7,6 +7,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.FileIO
+import net.mindlevel.Implicits
 import net.mindlevel.models.Tables._
 import slick.jdbc.MySQLProfile.api._
 import spray.json.DefaultJsonProtocol._
@@ -14,7 +15,7 @@ import spray.json.DefaultJsonProtocol._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
-object AccomplishmentRoute extends AbstractRoute {
+object AccomplishmentRoute extends AbstractRoute with Implicits {
 
   def route: Route =
     pathPrefix("accomplishment") {

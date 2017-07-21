@@ -1,4 +1,4 @@
-package routes
+package net.mindlevel.routes
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
