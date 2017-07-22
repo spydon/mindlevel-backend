@@ -15,6 +15,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick-codegen" % slickVersion,
   "com.github.t3hnar" %% "scala-bcrypt" % "3.0",
   "org.slf4j" % "slf4j-nop" % "1.6.4",
+  "ch.megard" %% "akka-http-cors" % "0.2.1",
   "mysql" % "mysql-connector-java" % "6.0.6"
 )
 
