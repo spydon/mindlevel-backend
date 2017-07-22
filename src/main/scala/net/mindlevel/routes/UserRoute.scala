@@ -72,12 +72,17 @@ object UserRoute extends AbstractRoute {
                         implicit val ec = ctx.executionContext
                         fileUpload("image") {
                           case (fileInfo, fileStream) =>
-                            val sink = FileIO.toPath(Paths.get("/tmp") resolve fileInfo.fileName)
+                            val filename = fileInfo.fileName // TODO: Hash later
+                            val sink = FileIO.toPath(Paths.get("/tmp") resolve filename)
                             val writeResult = fileStream.runWith(sink)
                             onSuccess(writeResult) { result =>
                               result.status match {
-                                case Success(_) => complete(s"Successfully written ${result.count} bytes")
-                                case Failure(e) => throw e
+                                case Success(_) =>
+                                  val q = for {u <- User if u.username === username} yield u.image
+                                  db.run(q.update(Some(filename))) // Fire and forget
+                                  complete(s"Successfully written ${result.count} bytes")
+                                case Failure(e) =>
+                                  throw e
                               }
                             }
                         }
