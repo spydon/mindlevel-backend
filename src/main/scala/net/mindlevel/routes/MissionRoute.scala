@@ -1,13 +1,16 @@
 package net.mindlevel.routes
 
+import java.nio.file.Paths
+
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import com.github.t3hnar.bcrypt._
+import akka.stream.scaladsl.FileIO
 import net.mindlevel.models.Tables._
 import slick.jdbc.MySQLProfile.api._
 import spray.json.DefaultJsonProtocol._
+import scala.util.{Failure, Success}
 
 object MissionRoute extends AbstractRoute {
   def route: Route =
@@ -28,14 +31,42 @@ object MissionRoute extends AbstractRoute {
           }
       } ~
         path(IntNumber) { id =>
-          get {
-            val maybeMission = db.run(Mission.filter(_.id === id).result.headOption)
+          pathEndOrSingleSlash {
+            get {
+              val maybeMission = db.run(Mission.filter(_.id === id).result.headOption)
 
-            onSuccess(maybeMission) {
-              case Some(mission) => complete(mission)
-              case None => complete(StatusCodes.NotFound)
+              onSuccess(maybeMission) {
+                case Some(mission) => complete(mission)
+                case None => complete(StatusCodes.NotFound)
+              }
             }
-          }
+          } ~
+            path("image") {
+              post {
+                headerValueByName("X-Session") { session =>
+                  onSuccess(isAuthorizedToMission(id, session)) {
+                    case true =>
+                      extractRequestContext { ctx =>
+                        implicit val materializer = ctx.materializer
+                        implicit val ec = ctx.executionContext
+                        fileUpload("image") {
+                          case (fileInfo, fileStream) =>
+                            val sink = FileIO.toPath(Paths.get("/tmp") resolve fileInfo.fileName)
+                            val writeResult = fileStream.runWith(sink)
+                            onSuccess(writeResult) { result =>
+                              result.status match {
+                                case Success(_) => complete(s"Successfully written ${result.count} bytes")
+                                case Failure(e) => throw e
+                              }
+                            }
+                        }
+                      }
+                    case false =>
+                      complete(StatusCodes.Unauthorized)
+                  }
+                }
+              }
+            }
         } ~
         path(Segment) { range =>
           get {
@@ -56,64 +87,6 @@ object MissionRoute extends AbstractRoute {
               complete(StatusCodes.BadRequest)
             }
           }
-        }
-    }
-
-  private val userRoute =
-    pathPrefix("user") {
-      pathEndOrSingleSlash {
-        post {
-          entity(as[UserRow]) { user =>
-            val processedUser = user.copy(password = user.password.bcrypt)
-            val maybeInserted = db.run(User += processedUser)
-            onSuccess(maybeInserted) {
-              case 1 => complete(StatusCodes.OK)
-              case _ => complete(StatusCodes.BadRequest)
-            }
-          }
-        }
-      } ~
-        pathPrefix(Segment) { username =>
-          pathEndOrSingleSlash {
-            get {
-              val maybeUser = db.run(User.filter(_.username === username).result.headOption)
-
-              onSuccess(maybeUser) {
-                case Some(user) => complete(user)
-                case None => complete(StatusCodes.NotFound)
-              }
-            } ~
-              put {
-                entity(as[UserRow]) { user =>
-                  onSuccess(isAuthorized(user.username, user.session.getOrElse(""))) {
-                    case true =>
-                      val q = for {u <- User if u.username === user.username} yield (u.description, u.image)
-                      val maybeUpdated = db.run(q.update(user.description, user.image))
-
-                      onSuccess(maybeUpdated) {
-                        case 1 => complete(StatusCodes.OK)
-                        case _ => complete(StatusCodes.BadRequest)
-                      }
-                    case false =>
-                      complete(StatusCodes.Unauthorized)
-                  }
-                } ~
-                entity(as[LoginFormat]) { user =>
-                  onSuccess(updatePassword(user)) { session =>
-                    complete(session)
-                  }
-                }
-              }
-          } ~
-            path("accomplishment") {
-              get {
-                val accomplishments = db.run(UserAccomplishment.filter(_.username === username).flatMap( ua =>
-                  Accomplishment.filter(_.id === ua.accomplishmentId)
-                ).result)
-
-                onSuccess(accomplishments)(complete(_))
-              }
-            }
         }
     }
 }
