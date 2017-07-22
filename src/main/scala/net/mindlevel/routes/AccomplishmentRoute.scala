@@ -113,18 +113,20 @@ object AccomplishmentRoute extends AbstractRoute {
                 }
               } ~
                 post {
-                  entity(as[ContributorRequest]) { request =>
+                  entity(as[Seq[String]]) { usernames =>
                     onSuccess(maybeAccomplishment) {
                       case Some(_) =>
-                        onSuccess(isAuthorizedToAccomplishment(id, request.session)) {
-                          case true =>
-                            val userAccomplishmentRows = request.usernames.map(UserAccomplishmentRow(_, id))
-                            val maybeInserted = db.run(UserAccomplishment ++= userAccomplishmentRows)
-                            onSuccess(maybeInserted) {
-                              case Some(_) => complete(StatusCodes.OK)
-                              case None => complete(StatusCodes.BadRequest)
-                            }
-                          case false => complete(StatusCodes.Unauthorized)
+                        headerValueByName("X-Session") { session =>
+                          onSuccess(isAuthorizedToAccomplishment(id, session)) {
+                            case true =>
+                              val userAccomplishmentRows = usernames.map(UserAccomplishmentRow(_, id))
+                              val maybeInserted = db.run(UserAccomplishment ++= userAccomplishmentRows)
+                              onSuccess(maybeInserted) {
+                                case Some(_) => complete(StatusCodes.OK)
+                                case None => complete(StatusCodes.BadRequest)
+                              }
+                            case false => complete(StatusCodes.Unauthorized)
+                          }
                         }
                       case None => complete(StatusCodes.NotFound)
                     }
