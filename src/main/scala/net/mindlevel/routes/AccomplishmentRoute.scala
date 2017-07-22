@@ -7,7 +7,6 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.FileIO
-import net.mindlevel.Implicits
 import net.mindlevel.models.Tables._
 import slick.jdbc.MySQLProfile.api._
 import spray.json.DefaultJsonProtocol._
@@ -15,7 +14,7 @@ import spray.json.DefaultJsonProtocol._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
-object AccomplishmentRoute extends AbstractRoute with Implicits {
+object AccomplishmentRoute extends AbstractRoute {
 
   def route: Route =
     pathPrefix("accomplishment") {
@@ -78,19 +77,26 @@ object AccomplishmentRoute extends AbstractRoute with Implicits {
           } ~
             path("image") {
               post {
-                extractRequestContext { ctx =>
-                  implicit val materializer = ctx.materializer
-                  implicit val ec = ctx.executionContext
-                  fileUpload("image") {
-                    case (fileInfo, fileStream) =>
-                      val sink = FileIO.toPath(Paths.get("/tmp") resolve fileInfo.fileName)
-                      val writeResult = fileStream.runWith(sink)
-                      onSuccess(writeResult) { result =>
-                        result.status match {
-                          case Success(_) => complete(s"Successfully written ${result.count} bytes")
-                          case Failure(e) => throw e
+                headerValueByName("X-Session") { session =>
+                  onSuccess(isAuthorizedToAccomplishment(id, session)) {
+                    case true =>
+                      extractRequestContext { ctx =>
+                        implicit val materializer = ctx.materializer
+                        implicit val ec = ctx.executionContext
+                        fileUpload("image") {
+                          case (fileInfo, fileStream) =>
+                            val sink = FileIO.toPath(Paths.get("/tmp") resolve fileInfo.fileName)
+                            val writeResult = fileStream.runWith(sink)
+                            onSuccess(writeResult) { result =>
+                              result.status match {
+                                case Success(_) => complete(s"Successfully written ${result.count} bytes")
+                                case Failure(e) => throw e
+                              }
+                            }
                         }
                       }
+                    case false =>
+                      complete(StatusCodes.Unauthorized)
                   }
                 }
               }
@@ -110,22 +116,15 @@ object AccomplishmentRoute extends AbstractRoute with Implicits {
                   entity(as[ContributorRequest]) { request =>
                     onSuccess(maybeAccomplishment) {
                       case Some(_) =>
-                        onSuccess(nameFromSession(request.session)) {
-                          case Some(requestor) =>
-                            val isAuthorized = db.run(UserAccomplishment
-                              .filter(_.username === requestor)
-                              .filter(_.accomplishmentId === id).result.headOption)
-                            onSuccess(isAuthorized) {
-                              case Some(_) =>
-                                val userAccomplishmentRows = request.usernames.map(UserAccomplishmentRow(_, id))
-                                val maybeInserted = db.run(UserAccomplishment ++= userAccomplishmentRows)
-                                onSuccess(maybeInserted) {
-                                  case Some(_) => complete(StatusCodes.OK)
-                                  case None => complete(StatusCodes.BadRequest)
-                                }
-                              case None => complete(StatusCodes.Unauthorized)
+                        onSuccess(isAuthorizedToAccomplishment(id, request.session)) {
+                          case true =>
+                            val userAccomplishmentRows = request.usernames.map(UserAccomplishmentRow(_, id))
+                            val maybeInserted = db.run(UserAccomplishment ++= userAccomplishmentRows)
+                            onSuccess(maybeInserted) {
+                              case Some(_) => complete(StatusCodes.OK)
+                              case None => complete(StatusCodes.BadRequest)
                             }
-                          case None => complete(StatusCodes.BadRequest)
+                          case false => complete(StatusCodes.Unauthorized)
                         }
                       case None => complete(StatusCodes.NotFound)
                     }

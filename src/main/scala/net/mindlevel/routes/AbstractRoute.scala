@@ -64,6 +64,24 @@ trait AbstractRoute {
     }
   }
 
+  protected def isAuthorizedToAccomplishment(accomplidhmentId: Int, session: String): Future[Boolean] = {
+    val maybeUser = nameFromSession(session)
+    maybeUser.flatMap {
+      case Some(username) =>
+        val isAuthorized =
+          db.run(UserAccomplishment
+            .filter(_.username === username)
+            .filter(_.accomplishmentId === accomplidhmentId).result.headOption)
+        isAuthorized.map {
+          case Some(_) => true
+          case None => false
+        }
+
+      case None =>
+        Future(false)
+    }
+  }
+
   protected def updatePassword(user: LoginFormat): Future[String] = {
      // Rewrite as transaction, could potentially cause race conditions or timing attacks
     val maybeUser = db.run {
