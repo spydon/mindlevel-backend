@@ -36,17 +36,19 @@ object UserRoute extends AbstractRoute {
             } ~
               put {
                 entity(as[UserRow]) { user =>
-                  onSuccess(isAuthorized(user.username, user.session.getOrElse(""))) {
-                    case true =>
-                      val q = for {u <- User if u.username === user.username} yield (u.description, u.image)
-                      val maybeUpdated = db.run(q.update(user.description, user.image))
+                  headerValueByName("X-Session") { session =>
+                    onSuccess(isAuthorized(user.username, session)) {
+                      case true =>
+                        val q = for {u <- User if u.username === user.username} yield (u.description, u.image)
+                        val maybeUpdated = db.run(q.update(user.description, user.image))
 
-                      onSuccess(maybeUpdated) {
-                        case 1 => complete(StatusCodes.OK)
-                        case _ => complete(StatusCodes.BadRequest)
-                      }
-                    case false =>
-                      complete(StatusCodes.Unauthorized)
+                        onSuccess(maybeUpdated) {
+                          case 1 => complete(StatusCodes.OK)
+                          case _ => complete(StatusCodes.BadRequest)
+                        }
+                      case false =>
+                        complete(StatusCodes.Unauthorized)
+                    }
                   }
                 } ~
                 entity(as[LoginFormat]) { user =>
