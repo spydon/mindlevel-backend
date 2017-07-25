@@ -18,6 +18,7 @@ trait AbstractRoute {
   def route: Route
   protected val db = Database.forConfig("db")
   protected val accomplishmentPageSize = 20
+  protected val missionPageSize = 20
 
   protected implicit object TimestampFormat extends JsonFormat[Timestamp] {
     def write(obj: Timestamp): JsNumber = JsNumber(obj.getTime)

@@ -29,7 +29,39 @@ object MissionRoute extends AbstractRoute {
               }
             }
           }
-      } ~
+      }  ~
+        pathPrefix("latest") {
+          pathEndOrSingleSlash {
+            get {
+              val missions = db.run(Mission.sortBy(_.created.desc).take(missionPageSize).result)
+              complete(missions)
+            }
+          } ~
+            path(IntNumber) { pageSize =>
+              get {
+                val missions = db.run(Mission.sortBy(_.created.desc).take(pageSize).result)
+                complete(missions)
+              }
+            } ~
+            path(Segment) { range =>
+              get {
+                if (range.contains("-")) {
+                  val between = range.split("-")
+                  val drop = between(0).toInt - 1
+                  val upper = between(1).toInt
+                  val take = upper - drop
+                  if (drop < upper) {
+                    val missions = db.run(Mission.sortBy(_.created.desc).drop(drop).take(take).result)
+                    complete(missions)
+                  } else {
+                    complete(StatusCodes.BadRequest)
+                  }
+                } else {
+                  complete(StatusCodes.BadRequest)
+                }
+              }
+            }
+        } ~
         path(IntNumber) { id =>
           pathEndOrSingleSlash {
             get {
