@@ -137,11 +137,11 @@ trait AbstractRoute {
 
             } else {
               // Not authorized
-              throw AuthException("Could not update the session")
+              throw AuthException("Not authorized")
             }
         }
       case None =>
-        throw AuthException("Could not update the session")
+        throw AuthException("Not authorized")
     }
   }
 

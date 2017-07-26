@@ -34,7 +34,7 @@ object UserRoute extends AbstractRoute {
               val maybeUser = db.run(User.filter(_.username === username).result.headOption)
 
               onSuccess(maybeUser) {
-                case Some(user) => complete(user)
+                case Some(user) => complete(user.copy(password = ""))
                 case None => complete(StatusCodes.NotFound)
               }
             } ~
