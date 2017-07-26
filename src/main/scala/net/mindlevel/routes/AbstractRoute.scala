@@ -37,22 +37,29 @@ trait AbstractRoute {
      session: Option[String] = None
   )
 
+  //protected case class AuthFormat(
+  //   username: String,
+  //   password: String,
+  //   session: Option[String] = None
+  //)
+
   protected implicit val accomplishmentFormat = jsonFormat7(AccomplishmentRow)
   protected implicit val missionFormat = jsonFormat7(MissionRow)
-  protected implicit val userFormat = jsonFormat7(UserRow)
+  protected implicit val userFormat = jsonFormat6(UserRow)
   protected implicit val userAccomplishmentFormat = jsonFormat2(UserAccomplishmentRow)
-  protected implicit val loginFormat = jsonFormat4(LoginFormat)
+  protected implicit val loginFormat = jsonFormat4(LoginFormat) // TODO: Refactor this
+  //protected implicit val authFormat = jsonFormat3(AuthFormat)
 
-  protected case class SessionUpdateException(msg: String, cause: Throwable = null) extends RuntimeException(msg, cause)
+  protected case class AuthException(msg: String, cause: Throwable = null) extends RuntimeException(msg, cause)
 
   protected def nameFromSession(session: String) = {
-    db.run(User.filter(_.session === session).map(_.username).result.headOption)
+    db.run(Session.filter(_.session === session).map(_.username).result.headOption)
   }
 
   protected def isAuthorized(username: String, session: String): Future[Boolean] = {
     val maybeUser = db.run {
-      User
-        .filter(user => user.username === username && user.session === session)
+      Session
+        .filter(s => s.username === username && s.session === session)
         .result.headOption
     }
     maybeUser.map {
@@ -98,63 +105,73 @@ trait AbstractRoute {
   }
 
   protected def updatePassword(user: LoginFormat): Future[String] = {
-     // Rewrite as transaction, could potentially cause race conditions or timing attacks
-    val maybeUser = db.run {
-      User
-        .filter(_.username === user.username)
-        .result.headOption
-    }
+    val q = for {
+      u <- User if u.username === user.username
+      s <- Session if u.username === s.username
+    } yield (u.username, u.password, s.session)
 
-    maybeUser flatMap {
-      case Some(foundUser) =>
-        if (user.session == foundUser.session && user.password.getOrElse("").isBcrypted(foundUser.password)) {
-          val q = for (u <- User if u.username === foundUser.username) yield (u.password, u.session)
-          val newSession = Some(Random.alphanumeric.take(64).mkString)
-          user.newPassword match {
-            case Some(password) =>
-              val hashedPassword = password.bcrypt
-              val maybeUpdated = db.run(q.update(hashedPassword, newSession))
-              maybeUpdated.map {
-                case 1 => newSession.get
-                case _ => throw SessionUpdateException(s"Could not update the session")
+    val maybeAuth = db.run(q.result.headOption)
+
+    maybeAuth flatMap {
+      case Some(auth) =>
+        auth match {
+          case (username, password, session) =>
+            if (user.session == session && user.password.getOrElse("").isBcrypted(password)) {
+              val q = for (u <- User if u.username === username) yield u.password
+              updateSession(user) flatMap {
+                case Some(newSession) =>
+                  user.newPassword match {
+                    case Some(newPassword) =>
+                      val hashedPassword = newPassword.bcrypt
+                      val maybeUpdated = db.run(q.update(hashedPassword))
+                      maybeUpdated map {
+                        case 1 => newSession
+                        case _ => throw AuthException(s"Could not update the password")
+                      }
+                    case None =>
+                      throw AuthException(s"No new password sent")
+                  }
+                case None =>
+                  throw AuthException(s"Could not update the session")
               }
-            case None =>
-              throw SessionUpdateException(s"Could not update the session")
-          }
 
-        } else {
-          // Not authorized
-          throw SessionUpdateException("Could not update the session")
+            } else {
+              // Not authorized
+              throw AuthException("Could not update the session")
+            }
         }
       case None =>
-        throw SessionUpdateException("Could not update the session")
+        throw AuthException("Could not update the session")
     }
   }
 
   protected def updateSession(user: LoginFormat, logout: Boolean = false): Future[Option[String]] = {
-    // Rewrite as transaction, could potentially cause race conditions or timing attacks
-    val maybeUser = db.run {
-      User
-        .filter(_.username === user.username)
-        .result.headOption
-    }
+    val q = for {
+      u <- User if u.username === user.username
+      s <- Session if u.username === s.username
+    } yield (u.username, u.password, s.session)
 
-    maybeUser flatMap {
-      case Some(foundUser) =>
-        if (user.session == foundUser.session || user.password.getOrElse("").isBcrypted(foundUser.password)) {
-          val currentSession = for (u <- User if u.username === foundUser.username) yield u.session
-          val newSession = if (logout) None else Some(Random.alphanumeric.take(64).mkString)
-          val maybeUpdated = db.run(currentSession.update(newSession))
-          maybeUpdated.map {
-            case 1 => newSession
-            case _ => throw SessionUpdateException(s"Could not update the session")
-          }
-        } else {
-          // Not authorized
-          throw SessionUpdateException("Could not update the session")
+    val maybeAuth = db.run(q.result.headOption)
+
+    maybeAuth flatMap {
+      case Some(auth) =>
+        auth match {
+          case (username, password, session) =>
+            if (user.session == session || user.password.getOrElse("").isBcrypted(password)) {
+              val currentSession = for (s <- Session if s.username === username) yield s.session
+              val newSession = if (logout) None else Some(Random.alphanumeric.take(64).mkString)
+              val maybeUpdated = db.run(currentSession.update(newSession))
+              maybeUpdated.map {
+                case 1 => newSession
+                case _ => throw AuthException(s"Could not update the session")
+              }
+            } else {
+              // Not authorized
+              throw AuthException("Could not update the session")
+            }
         }
       case None =>
-        throw SessionUpdateException("Could not update the session")
+        throw AuthException("Could not update the session")
     }
   }
 

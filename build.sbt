@@ -26,7 +26,7 @@ sourceGenerators in Compile += slickCodeGenTask
 lazy val slick = TaskKey[Seq[File]]("gen-tables")
 // TODO: Solve the manual add of O.AutoInc for CURRENT_TIMESTAMP fields
 lazy val slickCodeGenTask = (sourceManaged, dependencyClasspath in Compile, runner in Compile, streams) map { (dir, cp, r, s) =>
-  val pkg = "models"
+  val pkg = "net.mindlevel.models"
   val outputDir = (dir / "slick").getPath
   val username = "root"
   val password = "password"
@@ -34,6 +34,6 @@ lazy val slickCodeGenTask = (sourceManaged, dependencyClasspath in Compile, runn
   val jdbcDriver = "com.mysql.cj.jdbc.Driver"
   val slickDriver = "slick.jdbc.MySQLProfile"
   toError(r.run("slick.codegen.SourceCodeGenerator", cp.files, Array(slickDriver, jdbcDriver, url, outputDir, pkg, username, password), s.log))
-  val fname = outputDir + "/" + pkg + "/Tables.scala"
+  val fname = outputDir + "/" + pkg.replace(".", "/") + "/Tables.scala"
   Seq(file(fname))
 }
