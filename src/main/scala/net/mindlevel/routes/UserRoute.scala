@@ -1,6 +1,7 @@
 package net.mindlevel.routes
 
 import java.nio.file.Paths
+import java.time.Instant
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
@@ -11,6 +12,7 @@ import spray.json.DefaultJsonProtocol._
 import slick.jdbc.MySQLProfile.api._
 import net.mindlevel.models.Tables._
 import com.github.t3hnar.bcrypt._
+
 import scala.util.{Failure, Success}
 
 object UserRoute extends AbstractRoute {
@@ -19,7 +21,8 @@ object UserRoute extends AbstractRoute {
       pathEndOrSingleSlash {
         post {
           entity(as[UserRow]) { user =>
-            val processedUser = user.copy(password = user.password.bcrypt)
+            val now = Instant.now.getEpochSecond
+            val processedUser = user.copy(password = user.password.bcrypt, created = now)
             val maybeInserted = db.run(User += processedUser)
             onSuccess(maybeInserted) {
               case 1 => complete(StatusCodes.OK)

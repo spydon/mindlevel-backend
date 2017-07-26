@@ -23,8 +23,8 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`user` (
   `password` VARCHAR(255) NOT NULL,
   `description` VARCHAR(1024) NULL,
   `image` VARCHAR(255) NULL,
-  `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `last_active` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created` BIGINT NOT NULL,
+  `last_active` BIGINT,
   PRIMARY KEY (`username`))
 ENGINE = InnoDB;
 
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`mission` (
   `title` VARCHAR(255) NOT NULL,
   `description` VARCHAR(1024) NOT NULL,
   `image` VARCHAR(255) NOT NULL,
-  `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created` BIGINT NOT NULL,
   `creator` VARCHAR(255) NOT NULL,
   `validated` TINYINT(1) NOT NULL,
   PRIMARY KEY (`id`),
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`accomplishment` (
   `image` VARCHAR(255) NOT NULL,
   `mission_id` INT NOT NULL,
   `score` INT NOT NULL DEFAULT 0,
-  `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created` BIGINT,
   PRIMARY KEY (`id`),
   INDEX `fk_accomplishment_mission_idx` (`mission_id` ASC),
   CONSTRAINT `fk_accomplishment_mission`

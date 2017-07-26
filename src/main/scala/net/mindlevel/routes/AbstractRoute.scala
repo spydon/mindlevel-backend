@@ -1,6 +1,7 @@
 package net.mindlevel.routes
 
 import java.sql.Timestamp
+import java.time.Instant
 
 import akka.http.scaladsl.server.Route
 import com.github.t3hnar.bcrypt._
@@ -104,6 +105,17 @@ trait AbstractRoute {
     }
   }
 
+  protected def updateLastActive(username: String): Future[Boolean] = {
+    // Usually just fire and forget also not secured so only call from a secure context
+    val now = Some(Instant.now.getEpochSecond)
+    val q = for (u <- User if u.username === username) yield u.lastActive
+    val maybeUpdated = db.run(q.update(now))
+    maybeUpdated map {
+      case 1 => true
+      case _ => false
+    }
+  }
+
   protected def updatePassword(user: LoginFormat): Future[String] = {
     val q = for {
       u <- User if u.username === user.username
@@ -161,6 +173,7 @@ trait AbstractRoute {
               val currentSession = for (s <- Session if s.username === username) yield s.session
               val newSession = if (logout) None else Some(Random.alphanumeric.take(64).mkString)
               val maybeUpdated = db.run(currentSession.update(newSession))
+              updateLastActive(username)
               maybeUpdated.map {
                 case 1 => newSession
                 case _ => throw AuthException(s"Could not update the session")
