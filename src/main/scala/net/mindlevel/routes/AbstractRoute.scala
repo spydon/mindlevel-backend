@@ -38,22 +38,15 @@ trait AbstractRoute {
      session: Option[String] = None
   )
 
-  //protected case class AuthFormat(
-  //   username: String,
-  //   password: String,
-  //   session: Option[String] = None
-  //)
-
   protected implicit val accomplishmentFormat = jsonFormat7(AccomplishmentRow)
   protected implicit val missionFormat = jsonFormat7(MissionRow)
   protected implicit val userFormat = jsonFormat6(UserRow)
   protected implicit val userAccomplishmentFormat = jsonFormat2(UserAccomplishmentRow)
   protected implicit val loginFormat = jsonFormat4(LoginFormat) // TODO: Refactor this
-  //protected implicit val authFormat = jsonFormat3(AuthFormat)
 
   protected case class AuthException(msg: String, cause: Throwable = null) extends RuntimeException(msg, cause)
 
-  protected def nameFromSession(session: String) = {
+  protected def nameFromSession(session: String): Future[Option[String]] = {
     db.run(Session.filter(_.session === session).map(_.username).result.headOption)
   }
 
@@ -69,14 +62,14 @@ trait AbstractRoute {
     }
   }
 
-  protected def isAuthorizedToAccomplishment(accomplidhmentId: Int, session: String): Future[Boolean] = {
-    val maybeUser = nameFromSession(session)
-    maybeUser.flatMap {
+  protected def isAuthorizedToAccomplishment(accomplishmentId: Int, session: String): Future[Boolean] = {
+    val maybeUsername = nameFromSession(session)
+    maybeUsername.flatMap {
       case Some(username) =>
         val isAuthorized =
           db.run(UserAccomplishment
             .filter(_.username === username)
-            .filter(_.accomplishmentId === accomplidhmentId).result.headOption)
+            .filter(_.accomplishmentId === accomplishmentId).result.headOption)
         isAuthorized.map {
           case Some(_) => true
           case None => false
