@@ -19,9 +19,6 @@ object AccomplishmentRoute extends AbstractRoute {
   def route: Route =
     pathPrefix("accomplishment") {
       pathEndOrSingleSlash {
-        get {
-          complete(db.run(Accomplishment.result))
-        }
         post {
           entity(as[AccomplishmentRow]) { accomplishment =>
             val zeroScoreAccomplishment = accomplishment.copy(score = 0)
