@@ -25,8 +25,11 @@ object UserRoute extends AbstractRoute {
             val processedUser = user.copy(password = user.password.bcrypt, created = now)
             val maybeInserted = db.run(User += processedUser)
             onSuccess(maybeInserted) {
-              case 1 => complete(StatusCodes.OK)
-              case _ => complete(StatusCodes.BadRequest)
+              case 1 =>
+                db.run(Session += SessionRow(username = user.username, session = None))
+                complete(StatusCodes.OK)
+              case _ =>
+                complete(StatusCodes.BadRequest)
             }
           }
         }
