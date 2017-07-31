@@ -162,7 +162,7 @@ trait AbstractRoute {
       case Some(auth) =>
         auth match {
           case (username, password, session) =>
-            if (user.session == session || user.password.getOrElse("").isBcrypted(password)) {
+            if ((user.session == session && session.nonEmpty) || user.password.getOrElse("").isBcrypted(password)) {
               val currentSession = for (s <- Session if s.username === username) yield s.session
               val newSession = if (logout) None else Some(Random.alphanumeric.take(64).mkString)
               val maybeUpdated = db.run(currentSession.update(newSession))
@@ -173,7 +173,7 @@ trait AbstractRoute {
               }
             } else {
               // Not authorized
-              throw AuthException("Could not update the session")
+              throw AuthException("Invalid password")
             }
         }
       case None =>
