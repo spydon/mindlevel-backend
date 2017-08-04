@@ -29,7 +29,6 @@ object AccomplishmentRoute extends AbstractRoute {
             implicit val materializer = ctx.materializer
             implicit val ec = ctx.executionContext
             entity(as[Multipart.FormData]) { formData =>
-
               // collect all parts of the multipart as it arrives into a map
               val allParts: Future[Map[String, String]] = formData.parts.mapAsync[(String, String)](1) {
 
@@ -44,7 +43,7 @@ object AccomplishmentRoute extends AbstractRoute {
 
               val row = allParts.flatMap { parts =>
                 Unmarshal(parts("accomplishment")).to[AccomplishmentRow].map {
-                  _.copy(image = parts("filename"), score = 0)
+                  _.copy(image = parts("filename"), score = 0, created = Some(now))
                 }
               }
 
