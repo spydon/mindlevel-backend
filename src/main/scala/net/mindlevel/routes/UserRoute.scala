@@ -20,13 +20,13 @@ object UserRoute extends AbstractRoute {
     pathPrefix("user") {
       pathEndOrSingleSlash {
         post {
-          entity(as[UserRow]) { user =>
+          entity(as[LoginFormat]) { login =>
             val now = Instant.now.getEpochSecond
-            val processedUser = user.copy(password = user.password.bcrypt, created = now)
+            val processedUser = UserRow(username = login.username, password = login.password.get.bcrypt, created = now)
             val maybeInserted = db.run(User += processedUser)
             onSuccess(maybeInserted) {
               case 1 =>
-                db.run(Session += SessionRow(username = user.username, session = None))
+                db.run(Session += SessionRow(username = login.username, session = None))
                 complete(StatusCodes.OK)
               case _ =>
                 complete(StatusCodes.BadRequest)

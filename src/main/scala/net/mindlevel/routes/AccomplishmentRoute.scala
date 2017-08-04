@@ -1,17 +1,22 @@
 package net.mindlevel.routes
 
+import java.io.File
 import java.nio.file.Paths
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.Multipart.FormData.BodyPart
+import akka.http.scaladsl.model.{ContentType, Multipart, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.FileIO
 import net.mindlevel.models.Tables._
 import slick.jdbc.MySQLProfile.api._
 import spray.json.DefaultJsonProtocol._
 
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 object AccomplishmentRoute extends AbstractRoute {
@@ -20,12 +25,37 @@ object AccomplishmentRoute extends AbstractRoute {
     pathPrefix("accomplishment") {
       pathEndOrSingleSlash {
         post {
-          entity(as[AccomplishmentRow]) { accomplishment =>
-            val zeroScoreAccomplishment = accomplishment.copy(score = 0)
-            val maybeInserted = db.run(Accomplishment += zeroScoreAccomplishment)
-            onSuccess(maybeInserted) {
-              case 1 => complete(StatusCodes.OK)
-              case _ => complete(StatusCodes.BadRequest)
+          extractRequestContext { ctx =>
+            implicit val materializer = ctx.materializer
+            implicit val ec = ctx.executionContext
+            entity(as[Multipart.FormData]) { formData =>
+
+              // collect all parts of the multipart as it arrives into a map
+              val allParts: Future[Map[String, String]] = formData.parts.mapAsync[(String, String)](1) {
+
+                case b: BodyPart if b.name == "image" =>
+                  val file = File.createTempFile("upload", "tmp")
+                  b.entity.dataBytes.runWith(FileIO.toPath(file.toPath)).map(_ => "filename" -> file.getAbsolutePath)
+
+                case b: BodyPart =>
+                  b.toStrict(2.seconds).map(strict => b.name -> strict.entity.data.utf8String)
+
+              }.runFold(Map.empty[String, String])((map, tuple) => map + tuple)
+
+              val row = allParts.flatMap { parts =>
+                Unmarshal(parts("accomplishment")).to[AccomplishmentRow].map {
+                  _.copy(image = parts("filename"), score = 0)
+                }
+              }
+
+              val maybeInserted = row.flatMap { accomplishment =>
+                db.run(Accomplishment += accomplishment)
+              }
+
+              onSuccess(maybeInserted) {
+                case 1 => complete(StatusCodes.OK)
+                case _ => complete(StatusCodes.BadRequest)
+              }
             }
           }
         }
@@ -80,6 +110,7 @@ object AccomplishmentRoute extends AbstractRoute {
                       extractRequestContext { ctx =>
                         implicit val materializer = ctx.materializer
                         implicit val ec = ctx.executionContext
+                        // DEPRECATED, use POST /accomplishment instead
                         fileUpload("image") {
                           case (fileInfo, fileStream) =>
                             val filename = fileInfo.fileName // TODO: Hash later
@@ -90,7 +121,8 @@ object AccomplishmentRoute extends AbstractRoute {
                                 case Success(_) =>
                                   val q = for {a <- Accomplishment if a.id === id} yield a.image
                                   db.run(q.update(filename)) // Fire and forget
-                                  complete(s"Successfully written ${result.count} bytes")
+                                  println(s"Successfully written ${result.count} bytes")
+                                  complete(filename)
                                 case Failure(e) =>
                                   throw e
                               }

@@ -164,7 +164,7 @@ trait AbstractRoute {
           case (username, password, session) =>
             if ((user.session == session && session.nonEmpty) || user.password.getOrElse("").isBcrypted(password)) {
               val currentSession = for (s <- Session if s.username === username) yield s.session
-              val newSession = if (logout) None else Some(Random.alphanumeric.take(64).mkString)
+              val newSession = if (logout) None else Some(Random.alphanumeric.take(64).mkString.bcrypt)
               val maybeUpdated = db.run(currentSession.update(newSession))
               updateLastActive(username)
               maybeUpdated.map {
