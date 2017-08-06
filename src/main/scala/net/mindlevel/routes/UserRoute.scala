@@ -1,18 +1,23 @@
 package net.mindlevel.routes
 
+import java.io.File
 import java.nio.file.Paths
 import java.time.Instant
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.{Multipart, StatusCodes}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.Multipart.FormData.BodyPart
+import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.FileIO
 import spray.json.DefaultJsonProtocol._
 import slick.jdbc.MySQLProfile.api._
 import net.mindlevel.models.Tables._
 import com.github.t3hnar.bcrypt._
 
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 
 object UserRoute extends AbstractRoute {
@@ -44,23 +49,48 @@ object UserRoute extends AbstractRoute {
               }
             } ~
               put {
-                entity(as[UserRow]) { user =>
-                  headerValueByName("X-Session") { session =>
-                    onSuccess(isAuthorized(user.username, session)) {
-                      case true =>
-                        val q = for {u <- User if u.username === user.username} yield (u.description, u.image)
-                        val maybeUpdated = db.run(q.update(user.description, user.image))
+                extractRequestContext { ctx =>
+                  implicit val materializer = ctx.materializer
+                  implicit val ec = ctx.executionContext
+                  entity(as[Multipart.FormData]) { formData =>
+                    headerValueByName("X-Session") { session =>
+                      val allParts: Future[Map[String, String]] = formData.parts.mapAsync[(String, String)](1) {
 
-                        onSuccess(maybeUpdated) {
-                          case 1 => complete(StatusCodes.OK)
-                          case _ => complete(StatusCodes.BadRequest)
+                        case b: BodyPart if b.name == "image" =>
+                          val file = File.createTempFile("upload", "tmp")
+                          b.entity.dataBytes.runWith(FileIO.toPath(file.toPath)).map(_ => "filename" -> file.getAbsolutePath)
+
+                        case b: BodyPart =>
+                          b.toStrict(2.seconds).map(strict => b.name -> strict.entity.data.utf8String)
+
+                      }.runFold(Map.empty[String, String])((map, tuple) => map + tuple)
+
+                      val row = allParts.flatMap { parts =>
+                        Unmarshal(parts("user")).to[UserRow].map {
+                          _.copy(image = Some(parts("image")))
                         }
-                      case false =>
-                        complete(StatusCodes.Unauthorized)
+                      }
+
+                      val isUpdated = row.flatMap { userRow =>
+                        isAuthorized(userRow.username, session) flatMap {
+                          case true =>
+                            val q = for {u <- User if u.username === userRow.username} yield (u.description, u.image, u.password)
+                            val maybeUpdated = db.run(q.update(userRow.description, userRow.image, userRow.password.bcrypt))
+
+                            maybeUpdated map {
+                              case 1 => complete(StatusCodes.OK)
+                              case _ => complete(StatusCodes.BadRequest)
+                            }
+                          case false =>
+                            Future(complete(StatusCodes.Unauthorized))
+                        }
+                      }
+
+                      onSuccess(isUpdated) { result => result } // TODO: Smarter extraction
                     }
                   }
                 } ~
-                entity(as[LoginFormat]) { user =>
+                  entity(as[LoginFormat]) { user =>
                   onSuccess(updatePassword(user)) { session =>
                     complete(session)
                   }

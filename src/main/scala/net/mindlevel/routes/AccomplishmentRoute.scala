@@ -34,7 +34,7 @@ object AccomplishmentRoute extends AbstractRoute {
 
                 case b: BodyPart if b.name == "image" =>
                   val file = File.createTempFile("upload", "tmp")
-                  b.entity.dataBytes.runWith(FileIO.toPath(file.toPath)).map(_ => "filename" -> file.getAbsolutePath)
+                  b.entity.dataBytes.runWith(FileIO.toPath(file.toPath)).map(_ => "image" -> file.getAbsolutePath)
 
                 case b: BodyPart =>
                   b.toStrict(2.seconds).map(strict => b.name -> strict.entity.data.utf8String)
@@ -43,7 +43,7 @@ object AccomplishmentRoute extends AbstractRoute {
 
               val row = allParts.flatMap { parts =>
                 Unmarshal(parts("accomplishment")).to[AccomplishmentRow].map {
-                  _.copy(image = parts("filename"), score = 0, created = Some(now))
+                  _.copy(image = parts("image"), score = 0, created = Some(now))
                 }
               }
 
