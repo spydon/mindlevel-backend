@@ -58,7 +58,8 @@ object UserRoute extends AbstractRoute {
 
                         case b: BodyPart if b.name == "image" =>
                           val file = File.createTempFile("upload", "tmp")
-                          b.entity.dataBytes.runWith(FileIO.toPath(file.toPath)).map(_ => "filename" -> file.getAbsolutePath)
+                          b.entity.dataBytes.runWith(FileIO.toPath(file.toPath))
+                            .map(_ => "image" -> file.getAbsolutePath)
 
                         case b: BodyPart =>
                           b.toStrict(2.seconds).map(strict => b.name -> strict.entity.data.utf8String)
