@@ -13,10 +13,10 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % slickVersion,
   "com.typesafe.slick" %% "slick-hikaricp" % slickVersion,
   "com.typesafe.slick" %% "slick-codegen" % slickVersion,
-  "com.google.cloud" % "google-cloud-storage" % "1.3.1",
   "com.github.t3hnar" %% "scala-bcrypt" % "3.0",
   "org.slf4j" % "slf4j-nop" % "1.6.4",
   "ch.megard" %% "akka-http-cors" % "0.2.1",
+  "jp.co.bizreach" %% "aws-s3-scala" % "0.0.11",
   "mysql" % "mysql-connector-java" % "6.0.6"
 )
 
