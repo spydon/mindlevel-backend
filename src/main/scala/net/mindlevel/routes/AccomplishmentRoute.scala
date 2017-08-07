@@ -10,6 +10,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.FileIO
+import net.mindlevel.S3Util
 import net.mindlevel.models.Tables._
 import slick.jdbc.MySQLProfile.api._
 import spray.json.DefaultJsonProtocol._
@@ -34,7 +35,7 @@ object AccomplishmentRoute extends AbstractRoute {
 
                 case b: BodyPart if b.name == "image" =>
                   val file = File.createTempFile("upload", "tmp")
-                  b.entity.dataBytes.runWith(FileIO.toPath(file.toPath)).map(_ => "image" -> file.getAbsolutePath)
+                  b.entity.dataBytes.runWith(FileIO.toPath(file.toPath)).map(_ => "image" -> S3Util.put(file))
 
                 case b: BodyPart =>
                   b.toStrict(2.seconds).map(strict => b.name -> strict.entity.data.utf8String)

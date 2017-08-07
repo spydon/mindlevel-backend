@@ -15,7 +15,11 @@ import spray.json.DefaultJsonProtocol._
 import slick.jdbc.MySQLProfile.api._
 import net.mindlevel.models.Tables._
 import com.github.t3hnar.bcrypt._
+import net.mindlevel.S3Util
+import net.mindlevel.models.Tables
+import slick.dbio.Effect.{Transactional, Write}
 
+import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
@@ -59,7 +63,7 @@ object UserRoute extends AbstractRoute {
                         case b: BodyPart if b.name == "image" =>
                           val file = File.createTempFile("upload", "tmp")
                           b.entity.dataBytes.runWith(FileIO.toPath(file.toPath))
-                            .map(_ => "image" -> file.getAbsolutePath)
+                            .map(_ => "image" -> S3Util.put(file))
 
                         case b: BodyPart =>
                           b.toStrict(2.seconds).map(strict => b.name -> strict.entity.data.utf8String)
@@ -68,19 +72,32 @@ object UserRoute extends AbstractRoute {
 
                       val row = allParts.flatMap { parts =>
                         Unmarshal(parts("user")).to[UserRow].map {
-                          _.copy(image = Some(parts("image")))
+                          _.copy(image = parts.get("image"))
                         }
                       }
 
                       val isUpdated = row.flatMap { userRow =>
                         isAuthorized(userRow.username, session) flatMap {
                           case true =>
-                            val q = for {u <- User if u.username === userRow.username} yield (u.description, u.image, u.password)
-                            val maybeUpdated = db.run(q.update(userRow.description, userRow.image, userRow.password.bcrypt))
+                            val actions = mutable.ArrayBuffer[DBIOAction[Int, NoStream, Write with Transactional]]()
+                            val query = User.withFilter(_.username === userRow.username)
+
+                            if (!userRow.password.isEmpty) {
+                              actions += query.map(_.password).update(userRow.password.bcrypt)
+                            }
+
+                            if (userRow.description.isDefined) {
+                              actions += query.map(_.description).update(userRow.description)
+                            }
+
+                            if (userRow.image.isDefined) {
+                              actions += query.map(_.image).update(userRow.image)
+                            }
+
+                            val maybeUpdated = db.run(DBIO.seq(actions.map(_.transactionally): _*))
 
                             maybeUpdated map {
-                              case 1 => complete(StatusCodes.OK)
-                              case _ => complete(StatusCodes.BadRequest)
+                              _ => complete(StatusCodes.OK)
                             }
                           case false =>
                             Future(complete(StatusCodes.Unauthorized))

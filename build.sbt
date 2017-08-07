@@ -26,6 +26,7 @@ sourceGenerators in Compile += slickCodeGenTask
 
 lazy val slick = TaskKey[Seq[File]]("gen-tables")
 // TODO: Solve the manual add of O.AutoInc for CURRENT_TIMESTAMP fields
+// Don't forget to add the src_managed folder in intellij if net.mindlevel.models is not found
 lazy val slickCodeGenTask = Def.task {
   val dir = sourceManaged.value
   val cp = (dependencyClasspath in Compile).value

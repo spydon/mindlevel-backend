@@ -14,9 +14,9 @@ object Boot extends App {
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
 
-  val conf = ConfigFactory.load();
-  val hostname = conf.getString("mindlevel.hostname");
-  val port = conf.getInt("mindlevel.port");
+  val conf = ConfigFactory.load()
+  val hostname = conf.getString("mindlevel.hostname")
+  val port = conf.getInt("mindlevel.port")
   // needed for the future map/flatmap in the end
   implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 

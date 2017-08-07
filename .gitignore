@@ -3,4 +3,4 @@
 project
 target
 .idea
-src/main/resources/google-keyfile.json
+src/main/resources/application.conf
