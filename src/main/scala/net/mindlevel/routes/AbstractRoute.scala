@@ -175,7 +175,7 @@ trait AbstractRoute {
               }
             } else {
               // Not authorized
-              throw AuthException("Invalid password")
+              throw AuthException("Invalid password or session")
             }
         }
       case None =>
