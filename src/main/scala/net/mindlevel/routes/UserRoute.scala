@@ -30,7 +30,8 @@ object UserRoute extends AbstractRoute {
       pathEndOrSingleSlash {
         post {
           entity(as[LoginFormat]) { login =>
-            val processedUser = UserRow(username = login.username, password = login.password.get.bcrypt, created = now)
+            val processedUser =
+              UserRow(username = login.username, password = login.password.get.bcrypt, score = 0, created = now)
             val maybeInserted = db.run(User += processedUser)
             onSuccess(maybeInserted) {
               case 1 =>
@@ -46,6 +47,23 @@ object UserRoute extends AbstractRoute {
           pathEndOrSingleSlash {
             get {
               val maybeUser = db.run(User.filter(_.username === username).result.headOption)
+              //val userQuery =
+              //  for {
+              //    ((user, accomplishment), like) <-
+              //    User join UserAccomplishment on (_.username === _.username) join AccomplishmentLike on (_._2.accomplishmentId === _.accomplishmentId)
+              //    if user.username === username }
+              //    yield (user.username, user.image, user.description, user.lastActive, user.created, like.score)
+
+              //val q = for {
+              //  ((username), ts) <- userQuery.groupBy(_.1))
+              //} yield (username, ts.map(_._6).sum.getOrElse(0))
+
+              //val userQuery = scoreQuery.map(_).sum()
+              //val full =
+              //  for {
+              //    (u, s) <- userQuery zip scoreQuery
+              //  } yield (u._1, s._1)
+              //val run = db.run(q.result)
 
               onSuccess(maybeUser) {
                 case Some(user) => complete(user.copy(password = ""))

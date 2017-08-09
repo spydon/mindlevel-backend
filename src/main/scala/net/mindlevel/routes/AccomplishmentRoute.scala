@@ -18,7 +18,6 @@ import spray.json.DefaultJsonProtocol._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
 
 object AccomplishmentRoute extends AbstractRoute {
 
@@ -30,31 +29,42 @@ object AccomplishmentRoute extends AbstractRoute {
             implicit val materializer = ctx.materializer
             implicit val ec = ctx.executionContext
             entity(as[Multipart.FormData]) { formData =>
-              // collect all parts of the multipart as it arrives into a map
-              val allParts: Future[Map[String, String]] = formData.parts.mapAsync[(String, String)](1) {
+              headerValueByName("X-Session") { session =>
+                onSuccess(nameFromSession(session)) {
+                  case Some(username) =>
+                    // collect all parts of the multipart as it arrives into a map
+                    val allParts: Future[Map[String, String]] = formData.parts.mapAsync[(String, String)](1) {
 
-                case b: BodyPart if b.name == "image" =>
-                  val file = File.createTempFile("upload", "tmp")
-                  b.entity.dataBytes.runWith(FileIO.toPath(file.toPath)).map(_ => "image" -> S3Util.put(file))
+                      case b: BodyPart if b.name == "image" =>
+                        val file = File.createTempFile("upload", "tmp")
+                        b.entity.dataBytes.runWith(FileIO.toPath(file.toPath)).map(_ => "image" -> S3Util.put(file))
 
-                case b: BodyPart =>
-                  b.toStrict(2.seconds).map(strict => b.name -> strict.entity.data.utf8String)
+                      case b: BodyPart =>
+                        b.toStrict(2.seconds).map(strict => b.name -> strict.entity.data.utf8String)
 
-              }.runFold(Map.empty[String, String])((map, tuple) => map + tuple)
+                    }.runFold(Map.empty[String, String])((map, tuple) => map + tuple)
 
-              val row = allParts.flatMap { parts =>
-                Unmarshal(parts("accomplishment")).to[AccomplishmentRow].map {
-                  _.copy(image = parts("image"), score = 0, created = Some(now))
+                    val row = allParts.flatMap { parts =>
+                      Unmarshal(parts("accomplishment")).to[AccomplishmentRow].map {
+                        _.copy(image = parts("image"), score = 0, created = Some(now))
+                      }
+                    }
+
+                    onSuccess(row) { accomplishment =>
+                      val accomplishmentWithIdQuery =
+                        (Accomplishment returning Accomplishment.map(_.id) into ((accomplishment: AccomplishmentRow, id) =>
+                          accomplishment.copy(id = id)) += accomplishment)
+                      onSuccess(db.run(accomplishmentWithIdQuery)) { accomplishment =>
+                        val userAccomplishmentRow = UserAccomplishmentRow(username, accomplishment.id)
+                        onSuccess(db.run(UserAccomplishment += userAccomplishmentRow)) {
+                          case 1 => complete(accomplishment)
+                          case _ => complete(StatusCodes.BadRequest)
+                        }
+                      }
+                    }
+                  case _ =>
+                    complete(StatusCodes.Unauthorized)
                 }
-              }
-
-              val maybeInserted = row.flatMap { accomplishment =>
-                db.run(Accomplishment += accomplishment)
-              }
-
-              onSuccess(maybeInserted) {
-                case 1 => complete(StatusCodes.OK)
-                case _ => complete(StatusCodes.BadRequest)
               }
             }
           }
@@ -107,12 +117,27 @@ object AccomplishmentRoute extends AbstractRoute {
                 headerValueByName("X-Session") { session =>
                   onSuccess(nameFromSession(session)) {
                     case Some(username) =>
-                      val accomplishmentLike = AccomplishmentLikeRow(username = username, accomplishmentId = id, 1)
+                      val scoreValue = 1
+                      val accomplishmentLike =
+                        AccomplishmentLikeRow(username = username, accomplishmentId = id, score = scoreValue)
                       val maybeInserted = db.run(AccomplishmentLike += accomplishmentLike)
 
                       onSuccess(maybeInserted) {
-                        case 1 => complete(StatusCodes.OK)
-                        case _ => complete(StatusCodes.BadRequest)
+                        case 1 =>
+                          // Give score to affected users
+                          // Get all users from user_accomplishment join with user
+                          // increment score for accomplishment and user
+                          val updateScore =
+                            sqlu"""UPDATE user u, accomplishment a
+                              join user_accomplishment
+                              join accomplishment on user_accomplishment.accomplishment_id = accomplishment.id
+                              SET u.score = u.score + ${scoreValue}, a.score = a.score + ${scoreValue}
+                              WHERE a.id = ${id}"""
+
+                          db.run(updateScore) // Fire and forget
+                          complete(StatusCodes.OK)
+                        case _ =>
+                          complete(StatusCodes.BadRequest)
                       }
                     case None =>
                       complete(StatusCodes.Unauthorized)

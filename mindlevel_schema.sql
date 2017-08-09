@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`user` (
   `password` VARCHAR(255) NOT NULL,
   `description` VARCHAR(1024) NULL,
   `image` VARCHAR(255) NULL,
+  `score` INT NOT NULL,
   `created` BIGINT NOT NULL,
   `last_active` BIGINT,
   PRIMARY KEY (`username`))
