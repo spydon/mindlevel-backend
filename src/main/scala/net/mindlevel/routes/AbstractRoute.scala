@@ -2,6 +2,7 @@ package net.mindlevel.routes
 
 import java.sql.Timestamp
 import java.time.Instant
+import java.util.UUID
 
 import akka.http.scaladsl.server.Route
 import com.github.t3hnar.bcrypt._
@@ -166,7 +167,7 @@ trait AbstractRoute {
           case (username, password, session) =>
             if ((user.session == session && session.nonEmpty) || user.password.getOrElse("").isBcrypted(password)) {
               val currentSession = for (s <- Session if s.username === username) yield s.session
-              val newSession = if (logout) None else Some(Random.alphanumeric.take(64).mkString.bcrypt)
+              val newSession = if (logout) None else Some(UUID.randomUUID().toString)
               val maybeUpdated = db.run(currentSession.update(newSession))
               updateLastActive(username)
               maybeUpdated.map {

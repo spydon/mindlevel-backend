@@ -135,7 +135,10 @@ object AccomplishmentRoute extends AbstractRoute {
                               WHERE a.id = ${id}"""
 
                           db.run(updateScore) // Fire and forget
-                          complete(StatusCodes.OK)
+                          val maybeLikes = db.run(Accomplishment.filter(_.id === id).result.headOption)
+                          onSuccess(maybeLikes) { likes =>
+                            complete(likes.get.score.toString)
+                          }
                         case _ =>
                           complete(StatusCodes.BadRequest)
                       }
