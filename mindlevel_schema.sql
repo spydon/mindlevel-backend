@@ -115,6 +115,29 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`user_accomplishment` (
 ENGINE = InnoDB;
 
 
+-- -----------------------------------------------------
+-- Table `mindlevel`.`accomplishment_like`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `mindlevel`.`accomplishment_like` ;
+
+CREATE TABLE IF NOT EXISTS `mindlevel`.`accomplishment_like` (
+  `username` VARCHAR(255) NOT NULL,
+  `accomplishment_id` INT NOT NULL,
+  `score` INT NOT NULL,
+  PRIMARY KEY (`username`, `accomplishment_id`),
+  INDEX `fk_accomplishment_like_2_idx` (`accomplishment_id` ASC),
+  CONSTRAINT `fk_accomplishment_like_1`
+    FOREIGN KEY (`username`)
+    REFERENCES `mindlevel`.`user` (`username`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_accomplishment_like_2`
+    FOREIGN KEY (`accomplishment_id`)
+    REFERENCES `mindlevel`.`accomplishment` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
