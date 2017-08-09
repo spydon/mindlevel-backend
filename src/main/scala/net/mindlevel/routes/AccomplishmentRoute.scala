@@ -1,7 +1,6 @@
 package net.mindlevel.routes
 
 import java.io.File
-import java.nio.file.Paths
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.Multipart.FormData.BodyPart
@@ -18,6 +17,7 @@ import spray.json.DefaultJsonProtocol._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.util.Success
 
 object AccomplishmentRoute extends AbstractRoute {
 
@@ -121,9 +121,15 @@ object AccomplishmentRoute extends AbstractRoute {
                       val accomplishmentLike =
                         AccomplishmentLikeRow(username = username, accomplishmentId = id, score = scoreValue)
                       val maybeInserted = db.run(AccomplishmentLike += accomplishmentLike)
+                      def scoreResponse(first: Boolean) = {
+                        val maybeLikes = db.run(Accomplishment.filter(_.id === id).result.headOption)
+                        onSuccess(maybeLikes) { likes =>
+                          complete(LikeResponse(first, likes.get.score.toString))
+                        }
+                      }
 
-                      onSuccess(maybeInserted) {
-                        case 1 =>
+                      onComplete(maybeInserted) {
+                        case Success(_) =>
                           // Give score to affected users
                           // Get all users from user_accomplishment join with user
                           // increment score for accomplishment and user
@@ -135,12 +141,9 @@ object AccomplishmentRoute extends AbstractRoute {
                               WHERE a.id = ${id}"""
 
                           db.run(updateScore) // Fire and forget
-                          val maybeLikes = db.run(Accomplishment.filter(_.id === id).result.headOption)
-                          onSuccess(maybeLikes) { likes =>
-                            complete(likes.get.score.toString)
-                          }
+                          scoreResponse(true)
                         case _ =>
-                          complete(StatusCodes.BadRequest)
+                          scoreResponse(false) // Already liked
                       }
                     case None =>
                       complete(StatusCodes.Unauthorized)

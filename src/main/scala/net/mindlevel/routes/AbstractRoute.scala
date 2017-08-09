@@ -41,11 +41,17 @@ trait AbstractRoute {
      session: Option[String] = None
   )
 
+  protected case class LikeResponse(
+     first: Boolean,
+     score: String
+  )
+
   protected implicit val accomplishmentFormat = jsonFormat7(AccomplishmentRow)
   protected implicit val missionFormat = jsonFormat7(MissionRow)
   protected implicit val userFormat = jsonFormat7(UserRow)
   protected implicit val userAccomplishmentFormat = jsonFormat2(UserAccomplishmentRow)
   protected implicit val loginFormat = jsonFormat4(LoginFormat) // TODO: Refactor this
+  protected implicit val likeResponseFormat = jsonFormat2(LikeResponse)
 
   protected case class AuthException(msg: String, cause: Throwable = null) extends RuntimeException(msg, cause)
 
