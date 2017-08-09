@@ -102,34 +102,19 @@ object AccomplishmentRoute extends AbstractRoute {
               }
             }
           } ~
-            path("image") {
-              post {
+            path("like") {
+              get {
                 headerValueByName("X-Session") { session =>
-                  onSuccess(isAuthorizedToAccomplishment(id, session)) {
-                    case true =>
-                      extractRequestContext { ctx =>
-                        implicit val materializer = ctx.materializer
-                        implicit val ec = ctx.executionContext
-                        // DEPRECATED, use POST /accomplishment instead
-                        fileUpload("image") {
-                          case (fileInfo, fileStream) =>
-                            val filename = fileInfo.fileName // TODO: Hash later
-                            val sink = FileIO.toPath(Paths.get("/tmp") resolve filename)
-                            val writeResult = fileStream.runWith(sink)
-                            onSuccess(writeResult) { result =>
-                              result.status match {
-                                case Success(_) =>
-                                  val q = for {a <- Accomplishment if a.id === id} yield a.image
-                                  db.run(q.update(filename)) // Fire and forget
-                                  println(s"Successfully written ${result.count} bytes")
-                                  complete(filename)
-                                case Failure(e) =>
-                                  throw e
-                              }
-                            }
-                        }
+                  onSuccess(nameFromSession(session)) {
+                    case Some(username) =>
+                      val accomplishmentLike = AccomplishmentLikeRow(username = username, accomplishmentId = id, 1)
+                      val maybeInserted = db.run(AccomplishmentLike += accomplishmentLike)
+
+                      onSuccess(maybeInserted) {
+                        case 1 => complete(StatusCodes.OK)
+                        case _ => complete(StatusCodes.BadRequest)
                       }
-                    case false =>
+                    case None =>
                       complete(StatusCodes.Unauthorized)
                   }
                 }
