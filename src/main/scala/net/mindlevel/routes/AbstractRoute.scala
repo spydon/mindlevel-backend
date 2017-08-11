@@ -35,15 +35,15 @@ trait AbstractRoute {
 
   // Formats for unmarshalling and marshalling
   protected case class LoginFormat(
-     username: String,
-     password: Option[String] = None,
-     newPassword: Option[String] = None,
-     session: Option[String] = None
+      username: String,
+      password: Option[String] = None,
+      newPassword: Option[String] = None,
+      session: Option[String] = None
   )
 
   protected case class LikeResponse(
-     first: Boolean,
-     score: String
+      first: Boolean,
+      score: String
   )
 
   protected implicit val accomplishmentFormat = jsonFormat7(AccomplishmentRow)

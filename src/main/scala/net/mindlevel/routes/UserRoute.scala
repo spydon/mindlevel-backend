@@ -2,7 +2,6 @@ package net.mindlevel.routes
 
 import java.io.File
 import java.nio.file.Paths
-import java.time.Instant
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
@@ -16,18 +15,22 @@ import slick.jdbc.MySQLProfile.api._
 import net.mindlevel.models.Tables._
 import com.github.t3hnar.bcrypt._
 import net.mindlevel.S3Util
-import net.mindlevel.models.Tables
 import slick.dbio.Effect.{Transactional, Write}
 
 import scala.collection.mutable
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 object UserRoute extends AbstractRoute {
   def route: Route =
     pathPrefix("user") {
       pathEndOrSingleSlash {
+        get {
+          onSuccess(db.run(User.result)) {
+            complete(_)
+          }
+        } ~
         post {
           entity(as[LoginFormat]) { login =>
             val processedUser =
@@ -43,27 +46,16 @@ object UserRoute extends AbstractRoute {
           }
         }
       } ~
+        path("usernames") {
+          get {
+            val usernames = db.run(User.map(_.username).result)
+            onSuccess(usernames)(complete(_))
+          }
+        } ~
         pathPrefix(Segment) { username =>
           pathEndOrSingleSlash {
             get {
               val maybeUser = db.run(User.filter(_.username === username).result.headOption)
-              //val userQuery =
-              //  for {
-              //    ((user, accomplishment), like) <-
-              //    User join UserAccomplishment on (_.username === _.username) join AccomplishmentLike on (_._2.accomplishmentId === _.accomplishmentId)
-              //    if user.username === username }
-              //    yield (user.username, user.image, user.description, user.lastActive, user.created, like.score)
-
-              //val q = for {
-              //  ((username), ts) <- userQuery.groupBy(_.1))
-              //} yield (username, ts.map(_._6).sum.getOrElse(0))
-
-              //val userQuery = scoreQuery.map(_).sum()
-              //val full =
-              //  for {
-              //    (u, s) <- userQuery zip scoreQuery
-              //  } yield (u._1, s._1)
-              //val run = db.run(q.result)
 
               onSuccess(maybeUser) {
                 case Some(user) => complete(user.copy(password = ""))

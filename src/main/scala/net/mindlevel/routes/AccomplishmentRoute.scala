@@ -50,15 +50,25 @@ object AccomplishmentRoute extends AbstractRoute {
                       }
                     }
 
+                    val contributorsF = allParts.flatMap { parts =>
+                      Unmarshal(parts("contributors")).to[List[String]]
+                    }
+
                     onSuccess(row) { accomplishment =>
                       val accomplishmentWithIdQuery =
-                        (Accomplishment returning Accomplishment.map(_.id) into ((accomplishment: AccomplishmentRow, id) =>
-                          accomplishment.copy(id = id)) += accomplishment)
+                        Accomplishment returning Accomplishment.map(_.id) into ((accomplishment: AccomplishmentRow, id) =>
+                          accomplishment.copy(id = id)) += accomplishment
                       onSuccess(db.run(accomplishmentWithIdQuery)) { accomplishment =>
-                        val userAccomplishmentRow = UserAccomplishmentRow(username, accomplishment.id)
-                        onSuccess(db.run(UserAccomplishment += userAccomplishmentRow)) {
-                          case 1 => complete(accomplishment)
-                          case _ => complete(StatusCodes.BadRequest)
+                        onSuccess(contributorsF) { contributors =>
+                          val creatorAccomplishmentRow = UserAccomplishmentRow(username, accomplishment.id)
+                          val contributorRows =
+                            contributors.map { contributor =>
+                              UserAccomplishmentRow(username = contributor, accomplishmentId = accomplishment.id)
+                            }
+                          val contributorSet = (creatorAccomplishmentRow :: contributorRows).toSet
+                          onSuccess(db.run(UserAccomplishment ++= contributorSet)) { _ =>
+                            complete(accomplishment)
+                          }
                         }
                       }
                     }
