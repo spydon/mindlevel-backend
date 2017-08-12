@@ -3,9 +3,15 @@ SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
 
 -- -----------------------------------------------------
--- Schema mindlevel
+-- Uncomment to drop all
 -- -----------------------------------------------------
-DROP SCHEMA IF EXISTS `mindlevel` ;
+-- DROP SCHEMA IF EXISTS `mindlevel` ;
+-- DROP TABLE IF EXISTS `mindlevel`.`user` ;
+-- DROP TABLE IF EXISTS `mindlevel`.`session` ;
+-- DROP TABLE IF EXISTS `mindlevel`.`mission` ;
+-- DROP TABLE IF EXISTS `mindlevel`.`accomplishment` ;
+-- DROP TABLE IF EXISTS `mindlevel`.`user_accomplishment` ;
+-- DROP TABLE IF EXISTS `mindlevel`.`accomplishment_like` ;
 
 -- -----------------------------------------------------
 -- Schema mindlevel
@@ -16,7 +22,6 @@ USE `mindlevel` ;
 -- -----------------------------------------------------
 -- Table `mindlevel`.`user`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mindlevel`.`user` ;
 
 CREATE TABLE IF NOT EXISTS `mindlevel`.`user` (
   `username` VARCHAR(255) NOT NULL,
@@ -32,7 +37,6 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 -- Table `mindlevel`.`session`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mindlevel`.`session` ;
 
 CREATE TABLE IF NOT EXISTS `mindlevel`.`session` (
   `username` VARCHAR(255) NOT NULL,
@@ -50,7 +54,6 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 -- Table `mindlevel`.`mission`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mindlevel`.`mission` ;
 
 CREATE TABLE IF NOT EXISTS `mindlevel`.`mission` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -73,7 +76,6 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 -- Table `mindlevel`.`accomplishment`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mindlevel`.`accomplishment` ;
 
 CREATE TABLE IF NOT EXISTS `mindlevel`.`accomplishment` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -96,7 +98,6 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 -- Table `mindlevel`.`user_accomplishment`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mindlevel`.`user_accomplishment` ;
 
 CREATE TABLE IF NOT EXISTS `mindlevel`.`user_accomplishment` (
   `username` VARCHAR(255) NOT NULL,
@@ -119,7 +120,6 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 -- Table `mindlevel`.`accomplishment_like`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mindlevel`.`accomplishment_like` ;
 
 CREATE TABLE IF NOT EXISTS `mindlevel`.`accomplishment_like` (
   `username` VARCHAR(255) NOT NULL,
