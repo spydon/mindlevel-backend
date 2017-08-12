@@ -51,7 +51,7 @@ object AccomplishmentRoute extends AbstractRoute {
                     }
 
                     val contributorsF = allParts.flatMap { parts =>
-                      Unmarshal(parts("contributors")).to[List[String]]
+                      Unmarshal(parts("contributors")).to[Contributors].map(_.contributors)
                     }
 
                     onSuccess(row) { accomplishment =>
