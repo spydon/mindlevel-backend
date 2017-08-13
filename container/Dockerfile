@@ -18,7 +18,7 @@ RUN git clone git@github.com:spydon/mindlevel-backend.git
 WORKDIR /root/mindlevel-backend
 
 # Setup database (make sure not to drop tables)
-RUN mysql -uroot -ppassword -h mindlevel.c92a9muiqzi2.us-east-1.rds.amazonaws.com mindlevel < mindlevel_schema.sql
+RUN mysql -uroot -ppassword -h mindlevel.cxkevz1h137d.eu-central-1.rds.amazonaws.com < mindlevel_schema.sql
 
 # Make port 8080 available to the world outside this container
 EXPOSE 8080

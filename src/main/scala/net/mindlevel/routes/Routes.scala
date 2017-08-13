@@ -5,6 +5,6 @@ import akka.http.scaladsl.server.Route
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 
 object Routes {
-  private val routes = Seq(AccomplishmentRoute, LoginRoute, MissionRoute, UserRoute)
+  private val routes = Seq(AccomplishmentRoute, LoginRoute, MissionRoute, PingRoute, UserRoute)
   def all: Route = cors() { routes.map(_.route).reduceLeft(_ ~ _) }
 }
