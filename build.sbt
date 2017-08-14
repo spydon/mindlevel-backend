@@ -35,7 +35,7 @@ lazy val slickCodeGenTask = Def.task {
   val outputDir = (dir / "slick").getPath
   val username = "root"
   val password = "password"
-  val url = "jdbc:mysql://mindlevel.c92a9muiqzi2.us-east-1.rds.amazonaws.com:3306/mindlevel?nullNamePatternMatchesAll=true"
+  val url = "jdbc:mysql://mindlevel.cxkevz1h137d.eu-central-1.rds.amazonaws.com:3306/mindlevel?nullNamePatternMatchesAll=true"
   // val url = "jdbc:mysql://localhost/mindlevel?nullNamePatternMatchesAll=true"
   val jdbcDriver = "com.mysql.cj.jdbc.Driver"
   val slickDriver = "slick.jdbc.MySQLProfile"

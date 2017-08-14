@@ -2,9 +2,7 @@ FROM digitalgenius/alpine-scala-sbt:latest
 
 RUN apk update
 RUN apk upgrade
-RUN apk add git
-RUN apk add mysql-client
-RUN apk add -qU openssh
+RUN apk add git mysql-client openssh
 
 # Add private key to be able to clone from git
 RUN mkdir /root/.ssh
