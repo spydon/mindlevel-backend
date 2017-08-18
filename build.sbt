@@ -2,7 +2,7 @@ name := "mindlevel-backend"
 
 version := "1.0"
 
-scalaVersion := "2.12.1"
+scalaVersion := "2.12.3"
 val slickVersion = "3.2.0"
 val akkaVersion = "10.0.9"
 
@@ -14,9 +14,9 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick-hikaricp" % slickVersion,
   "com.typesafe.slick" %% "slick-codegen" % slickVersion,
   "com.github.t3hnar" %% "scala-bcrypt" % "3.0",
-  "org.slf4j" % "slf4j-nop" % "1.6.4",
   "ch.megard" %% "akka-http-cors" % "0.2.1",
   "jp.co.bizreach" %% "aws-s3-scala" % "0.0.11",
+  "org.slf4j" % "slf4j-nop" % "1.6.4",
   "mysql" % "mysql-connector-java" % "6.0.6"
 )
 
@@ -35,8 +35,8 @@ lazy val slickCodeGenTask = Def.task {
   val outputDir = (dir / "slick").getPath
   val username = "root"
   val password = "password"
-  val url = "jdbc:mysql://mindlevel.cxkevz1h137d.eu-central-1.rds.amazonaws.com:3306/mindlevel?nullNamePatternMatchesAll=true"
-  // val url = "jdbc:mysql://localhost/mindlevel?nullNamePatternMatchesAll=true"
+  //val url = "jdbc:mysql://mindlevel.cxkevz1h137d.eu-central-1.rds.amazonaws.com:3306/mindlevel?nullNamePatternMatchesAll=true"
+  val url = "jdbc:mysql://localhost/mindlevel?nullNamePatternMatchesAll=true"
   val jdbcDriver = "com.mysql.cj.jdbc.Driver"
   val slickDriver = "slick.jdbc.MySQLProfile"
   // TODO: Solve deprecation

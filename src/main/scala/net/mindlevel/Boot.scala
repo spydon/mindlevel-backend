@@ -21,6 +21,6 @@ object Boot extends App {
   implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
   val bindingFuture = Http().bindAndHandle(Routes.all, hostname, port)
-  println(s"Server online at http://$hostname:$port/\nPress CTRL+C to stop...")
+  println(s"Server online at http://$hostname:$port/\nSend SIGTERM to stop...")
   // TODO: Handle ctrl+c gracefully
 }

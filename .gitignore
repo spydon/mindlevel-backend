@@ -5,3 +5,4 @@ target
 .idea
 src/main/resources/application.conf
 id_rsa
+authorized_keys
