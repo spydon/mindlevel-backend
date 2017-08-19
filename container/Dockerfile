@@ -11,7 +11,7 @@ ADD authorized_keys /root/.ssh/
 RUN chmod 400 /root/.ssh/id_rsa
 RUN touch /root/.ssh/known_hosts
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
-RUN echo trigger
+RUN echo triggered
 RUN git clone git@github.com:spydon/mindlevel-backend.git
 
 # Set the working directory to /app
