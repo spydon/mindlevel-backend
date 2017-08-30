@@ -52,6 +52,15 @@ object UserRoute extends AbstractRoute {
             onSuccess(usernames)(complete(_))
           }
         } ~
+        pathPrefix("highscore") {
+          path(IntNumber) { amount =>
+            get {
+              // TODO: Reverse sorting, highest score first
+              val users = db.run(User.sortBy(_.score.desc).take(amount).result)
+              onSuccess(users)(complete(_))
+            }
+          }
+        } ~
         pathPrefix(Segment) { username =>
           pathEndOrSingleSlash {
             get {
