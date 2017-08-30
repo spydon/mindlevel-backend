@@ -124,6 +124,7 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `mindlevel`.`accomplishment_like` (
   `username` VARCHAR(255) NOT NULL,
   `accomplishment_id` INT NOT NULL,
+  `created` BIGINT NOT NULL,
   `score` INT NOT NULL,
   PRIMARY KEY (`username`, `accomplishment_id`),
   INDEX `fk_accomplishment_like_2_idx` (`accomplishment_id` ASC),

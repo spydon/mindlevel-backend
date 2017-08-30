@@ -129,7 +129,8 @@ object AccomplishmentRoute extends AbstractRoute {
                     case Some(username) =>
                       val scoreValue = 1
                       val accomplishmentLike =
-                        AccomplishmentLikeRow(username = username, accomplishmentId = id, score = scoreValue)
+                        AccomplishmentLikeRow(
+                          username = username, accomplishmentId = id, score = scoreValue, created = now())
                       val maybeInserted = db.run(AccomplishmentLike += accomplishmentLike)
                       def scoreResponse(first: Boolean) = {
                         val maybeLikes = db.run(Accomplishment.filter(_.id === id).result.headOption)
