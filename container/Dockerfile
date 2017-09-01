@@ -27,7 +27,7 @@ ADD authorized_keys /root/.ssh/
 RUN chmod 400 /root/.ssh/id_rsa
 RUN touch /root/.ssh/known_hosts
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
-ADD mindlevel-backend /root/
+ADD mindlevel-backend /root/mindlevel-backend
 
 # Set the working directory to /app
 WORKDIR /root/mindlevel-backend

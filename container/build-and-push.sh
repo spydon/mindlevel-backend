@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 ## Remember that the release branch is used
+cd `dirname "$0"` &&
+rm -rf ./mindlevel-backend &&
 git clone -b release git@github.com:spydon/mindlevel-backend.git &&
 mysql -uroot -ppassword mindlevel < mindlevel-backend/mindlevel_schema.sql &&
 docker build -t mindlevel . &&
