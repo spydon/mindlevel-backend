@@ -2,6 +2,7 @@ name := "mindlevel-backend"
 
 version := "1.0"
 
+logLevel := Level.Warn
 scalaVersion := "2.12.3"
 val slickVersion = "3.2.0"
 val akkaVersion = "10.0.9"
@@ -39,8 +40,8 @@ lazy val slickCodeGenTask = Def.task {
   val url = "jdbc:mysql://localhost/mindlevel?nullNamePatternMatchesAll=true"
   val jdbcDriver = "com.mysql.cj.jdbc.Driver"
   val slickDriver = "slick.jdbc.MySQLProfile"
-  // TODO: Solve deprecation
-  toError(r.run("slick.codegen.SourceCodeGenerator", cp.files, Array(slickDriver, jdbcDriver, url, outputDir, pkg, username, password), s.log))
+  // TODO: add foreach to check errors
+  r.run("slick.codegen.SourceCodeGenerator", cp.files, Array(slickDriver, jdbcDriver, url, outputDir, pkg, username, password), s.log)
   val fname = outputDir + "/" + pkg.replace(".", "/") + "/Tables.scala"
   Seq(file(fname))
 }
