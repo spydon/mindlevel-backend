@@ -2,7 +2,7 @@ FROM alpine:latest
 
 RUN apk update
 RUN apk upgrade
-RUN apk add git mysql-client openssh
+RUN apk add git mysql-client openssh openjdk8-jre-base
 
 # Install scala
 ENV SCALA_VERSION=2.12.3 \
