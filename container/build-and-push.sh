@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 ## Remember that the release branch is used
 ## DEPENDENCIES: mysql git sbt docker aws-tools
+awsRegion=eu-central-1
+taskDefinitionFile=task.json
+taskDefinitionName=mindlevel
+serviceName=mindlevel
+
 cd `dirname "$0"` &&
 ping -c1 github.com &&
 rm -rf ./mindlevel-backend &&
@@ -12,4 +17,9 @@ cd .. &&
 docker build -t mindlevel . &&
 docker tag mindlevel:latest 589361660625.dkr.ecr.eu-central-1.amazonaws.com/mindlevel:latest &&
 $(aws ecr get-login --region eu-central-1 --no-include-email) &&
-docker push 589361660625.dkr.ecr.eu-central-1.amazonaws.com/mindlevel:latest
+docker push 589361660625.dkr.ecr.eu-central-1.amazonaws.com/mindlevel:latest &&
+
+#echo 'Update task definition...'
+#aws ecs register-task-definition --cli-input-json file://$taskDefinitionFile --region $awsRegion > /dev/null
+#echo 'Update our service with that last task..'
+#aws ecs update-service --service $serviceName --task-definition $taskDefinitionName --region $awsRegion  > /dev/null
