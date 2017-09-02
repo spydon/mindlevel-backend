@@ -5,6 +5,7 @@ awsRegion=eu-central-1
 taskDefinitionFile=task.json
 taskDefinitionName=mindlevel
 serviceName=mindlevel
+awsRepo="589361660625.dkr.ecr.eu-central-1.amazonaws.com/mindlevel:latest"
 
 cd `dirname "$0"` &&
 ping -c1 github.com &&
@@ -15,9 +16,9 @@ mysql -uroot -ppassword mindlevel < mindlevel_schema.sql &&
 sbt assembly &&
 cd .. &&
 docker build -t mindlevel . &&
-docker tag mindlevel:latest 589361660625.dkr.ecr.eu-central-1.amazonaws.com/mindlevel:latest &&
+docker tag mindlevel:latest $awsRepo &&
 $(aws ecr get-login --region eu-central-1 --no-include-email) &&
-docker push 589361660625.dkr.ecr.eu-central-1.amazonaws.com/mindlevel:latest &&
+docker push $awsRepo
 
 #echo 'Update task definition...'
 #aws ecs register-task-definition --cli-input-json file://$taskDefinitionFile --region $awsRegion > /dev/null
