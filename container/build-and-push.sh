@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 ## Remember that the release branch is used
+## DEPENDENCIES: mysql git sbt docker aws-tools
 cd `dirname "$0"` &&
 ping -c1 github.com &&
 rm -rf ./mindlevel-backend &&

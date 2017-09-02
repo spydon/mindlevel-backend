@@ -1,4 +1,4 @@
-FROM digitalgenius/alpine-scala-sbt:latest
+FROM alpine:latest
 
 RUN apk update
 RUN apk upgrade
@@ -33,15 +33,8 @@ ADD mindlevel-backend /root/mindlevel-backend
 # Set the working directory to /app
 WORKDIR /root/mindlevel-backend
 
-# Setup database (make sure not to drop tables)
-#RUN mysql -uroot -ppassword -h mindlevel.cxkevz1h137d.eu-central-1.rds.amazonaws.com < mindlevel_schema.sql
-
-# Precompile project
-#RUN sbt assembly
-
 # Make port 8080 available to the world outside this container
 EXPOSE 8080
 
 # Run the scala app with sbt
-#CMD ["scala", "target/scala-2.12/mindlevel-backend-assembly-1.0.jar"]
 CMD ["sh", "container/runner.sh"]
