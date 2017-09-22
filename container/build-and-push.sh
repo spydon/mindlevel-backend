@@ -7,7 +7,9 @@ taskDefinitionName=mindlevel
 serviceName=mindlevel
 awsRepo="589361660625.dkr.ecr.eu-central-1.amazonaws.com/mindlevel:latest"
 
-echo "Remember that the RELEASE branch is used" &&
+echo "==========================================" &&
+echo " Remember that the RELEASE branch is used " &&
+echo "==========================================" &&
 cd `dirname "$0"` &&
 ping -c1 github.com &&
 rm -rf ./mindlevel-backend &&
