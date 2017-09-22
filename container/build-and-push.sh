@@ -7,6 +7,7 @@ taskDefinitionName=mindlevel
 serviceName=mindlevel
 awsRepo="589361660625.dkr.ecr.eu-central-1.amazonaws.com/mindlevel:latest"
 
+echo "Remember that the RELEASE branch is used" &&
 cd `dirname "$0"` &&
 ping -c1 github.com &&
 rm -rf ./mindlevel-backend &&
@@ -18,7 +19,8 @@ cd .. &&
 docker build -t mindlevel . &&
 docker tag mindlevel:latest $awsRepo &&
 $(aws ecr get-login --region eu-central-1 --no-include-email) &&
-docker push $awsRepo
+docker push $awsRepo &&
+echo "Successfully pushed container image to AWS"
 
 #echo 'Update task definition...'
 #aws ecs register-task-definition --cli-input-json file://$taskDefinitionFile --region $awsRegion > /dev/null
