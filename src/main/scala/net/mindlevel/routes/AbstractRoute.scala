@@ -13,12 +13,14 @@ import spray.json.{DeserializationException, JsNumber, JsValue, JsonFormat}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.Random
 
+private object DBSingleton {
+  val db = Database.forConfig("db")
+}
 
 trait AbstractRoute {
   def route: Route
-  protected val db = Database.forConfig("db")
+  protected val db = DBSingleton.db
   protected val accomplishmentPageSize = 20
   protected val missionPageSize = 20
 
