@@ -55,7 +55,6 @@ object UserRoute extends AbstractRoute {
         pathPrefix("highscore") {
           path(IntNumber) { amount =>
             get {
-              // TODO: Reverse sorting, highest score first
               val users = db.run(User.sortBy(_.score.desc).take(amount).result)
               onSuccess(users)(complete(_))
             }
@@ -171,7 +170,9 @@ object UserRoute extends AbstractRoute {
                   Accomplishment.filter(_.id === ua.accomplishmentId)
                 ).result)
 
-                onSuccess(accomplishments)(complete(_))
+                // TODO: Check if this is OK
+                //onSuccess(accomplishments)(complete(_))
+                complete(accomplishments)
               }
             }
         }

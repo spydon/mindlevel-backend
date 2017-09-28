@@ -62,7 +62,7 @@ object MissionRoute extends AbstractRoute {
               }
             }
         } ~
-        path(IntNumber) { id =>
+        pathPrefix(IntNumber) { id =>
           pathEndOrSingleSlash {
             get {
               val maybeMission = db.run(Mission.filter(_.id === id).result.headOption)
@@ -102,6 +102,11 @@ object MissionRoute extends AbstractRoute {
                       complete(StatusCodes.Unauthorized)
                   }
                 }
+              }
+            } ~
+            path("accomplishment") {
+              get {
+                complete(db.run(Accomplishment.filter(_.missionId === id).result))
               }
             }
         } ~
