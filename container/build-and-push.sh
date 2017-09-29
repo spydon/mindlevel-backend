@@ -22,9 +22,9 @@ docker build -t mindlevel . &&
 docker tag mindlevel:latest $awsRepo &&
 $(aws ecr get-login --region eu-central-1 --no-include-email) &&
 docker push $awsRepo &&
-echo "Successfully pushed container image to AWS"
-
-#echo 'Update task definition...'
-#aws ecs register-task-definition --cli-input-json file://$taskDefinitionFile --region $awsRegion > /dev/null
-#echo 'Update our service with that last task..'
-#aws ecs update-service --service $serviceName --task-definition $taskDefinitionName --region $awsRegion  > /dev/null
+echo "Successfully pushed container image to AWS" &&
+aws ecs list-tasks --cluster mindlevel | \
+sed '/\([{}].*\|.*taskArns.*\| *]\)/d' | sed 's/ *"\([^"]*\).*/\1/' | \
+while read -r task; do aws ecs stop-task --cluster mindlevel --task $task; done &&
+aws ecs run-task --cluster mindlevel --task-definition mindlevel:5 --count 1 &&
+echo "Successfully restarted the ECS task"
