@@ -4,7 +4,7 @@ import java.io.File
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.Multipart.FormData.BodyPart
-import akka.http.scaladsl.model.{ContentType, Multipart, StatusCodes}
+import akka.http.scaladsl.model.{Multipart, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling.Unmarshal
@@ -166,9 +166,11 @@ object AccomplishmentRoute extends AbstractRoute {
               get {
                 onSuccess(maybeAccomplishment) {
                   case Some(accomplishment) =>
-                    val contributors =
-                      db.run(UserAccomplishment.filter(_.accomplishmentId === accomplishment.id).map(_.username).result)
-                    onSuccess(contributors)(complete(_))
+                    val innerJoin = for {
+                      (_, u) <- UserAccomplishment join User on (_.username === _.username)
+                    } yield (u)
+                    val contributors = db.run(innerJoin.result)
+                    complete(contributors)
                   case None =>
                     complete(StatusCodes.NotFound)
                 }
