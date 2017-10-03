@@ -182,7 +182,7 @@ object AccomplishmentRoute extends AbstractRoute {
                         headerValueByName("X-Session") { session =>
                           onSuccess(isAuthorizedToAccomplishment(id, session)) {
                             case true =>
-                              val userAccomplishmentRows = usernames.map(UserAccomplishmentRow(_, id))
+                              val userAccomplishmentRows = usernames.toSet.map(UserAccomplishmentRow(_, id))
                               val maybeInserted = db.run(UserAccomplishment ++= userAccomplishmentRows)
                               onSuccess(maybeInserted) {
                                 case Some(_) => complete(StatusCodes.OK)
