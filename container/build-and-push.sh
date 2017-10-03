@@ -14,7 +14,7 @@ command -v systemctl >/dev/null 2>/dev/null && sudo systemctl start docker &&
 echo "Started docker"
 
 cd `dirname "$0"` &&
-ping -c1 github.com &&
+ping -c1 github.com > /dev/null &&
 echo "Got an internet connection" &&
 rm -rf ./mindlevel-backend &&
 git clone -b release git@github.com:spydon/mindlevel-backend.git > /dev/null &&
@@ -32,6 +32,6 @@ docker push $awsRepo &&
 echo "Successfully pushed container image to AWS" &&
 aws ecs list-tasks --cluster mindlevel | \
 sed '/\([{}].*\|.*taskArns.*\| *]\)/d' | sed 's/ *"\([^"]*\).*/\1/' | \
-while read -r task; do aws ecs stop-task --cluster mindlevel --task $task; done &&
-aws ecs run-task --cluster mindlevel --task-definition mindlevel:5 --count 1 &&
-echo "Successfully restarted the ECS task"
+while read -r task; do aws ecs stop-task --cluster mindlevel --task $task; done > /dev/null &&
+aws ecs run-task --cluster mindlevel --task-definition mindlevel:5 --count 1 > /dev/null &&
+echo "Successfully restarted the ECS task" || echo "Something failed"
