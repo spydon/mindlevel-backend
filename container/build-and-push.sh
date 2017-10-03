@@ -10,17 +10,23 @@ awsRepo="589361660625.dkr.ecr.eu-central-1.amazonaws.com/mindlevel:latest"
 echo "==========================================" &&
 echo " Remember that the RELEASE branch is used " &&
 echo "==========================================" &&
-command -v systemctl >/dev/null 2>/dev/null && sudo systemctl start docker
+command -v systemctl >/dev/null 2>/dev/null && sudo systemctl start docker &&
+echo "Started docker"
+
 cd `dirname "$0"` &&
 ping -c1 github.com &&
+echo "Got an internet connection" &&
 rm -rf ./mindlevel-backend &&
-git clone -b release git@github.com:spydon/mindlevel-backend.git &&
+git clone -b release git@github.com:spydon/mindlevel-backend.git > /dev/null &&
+echo "Cloned the release branch of the project" &&
 cd mindlevel-backend &&
 mysql -uroot -ppassword mindlevel < mindlevel_schema.sql &&
-sbt assembly &&
+echo "Setup the local database to build Slick structures from" &&
+sbt assembly > /dev/null &&
+echo "Built a fat jar" &&
 cd .. &&
-docker build -t mindlevel . &&
-docker tag mindlevel:latest $awsRepo &&
+docker build -t mindlevel . > /dev/null &&
+docker tag mindlevel:latest $awsRepo > /dev/null &&
 $(aws ecr get-login --region eu-central-1 --no-include-email) &&
 docker push $awsRepo &&
 echo "Successfully pushed container image to AWS" &&
