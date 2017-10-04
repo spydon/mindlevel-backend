@@ -167,7 +167,8 @@ object AccomplishmentRoute extends AbstractRoute {
                 onSuccess(maybeAccomplishment) {
                   case Some(accomplishment) =>
                     val innerJoin = for {
-                      (_, u) <- UserAccomplishment join User on (_.username === _.username)
+                      (_, u) <-
+                        UserAccomplishment.filter(_.accomplishmentId === id) join User on (_.username === _.username)
                     } yield (u)
                     val contributors = db.run(innerJoin.result)
                     complete(contributors)
