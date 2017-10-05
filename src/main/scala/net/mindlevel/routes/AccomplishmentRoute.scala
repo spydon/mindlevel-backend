@@ -178,8 +178,10 @@ object AccomplishmentRoute extends AbstractRoute {
                       (_, u) <-
                         UserAccomplishment.filter(_.accomplishmentId === id) join User on (_.username === _.username)
                     } yield (u)
-                    val contributors = db.run(innerJoin.result)
-                    complete(contributors)
+
+                    onSuccess(db.run(innerJoin.result)) { users =>
+                      complete(users.map(clearPassword))
+                    }
                   case None =>
                     complete(StatusCodes.NotFound)
                 }

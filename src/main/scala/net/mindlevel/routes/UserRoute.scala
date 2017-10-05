@@ -15,7 +15,9 @@ import slick.jdbc.MySQLProfile.api._
 import net.mindlevel.models.Tables._
 import com.github.t3hnar.bcrypt._
 import net.mindlevel.S3Util
+import net.mindlevel.models.Tables
 import slick.dbio.Effect.{Transactional, Write}
+import slick.model.Table
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -27,8 +29,8 @@ object UserRoute extends AbstractRoute {
     pathPrefix("user") {
       pathEndOrSingleSlash {
         get {
-          onSuccess(db.run(User.result)) {
-            complete(_)
+          onSuccess(db.run(User.result)) { users =>
+            complete(users.map(clearPassword))
           }
         } ~
         post {
@@ -66,7 +68,7 @@ object UserRoute extends AbstractRoute {
               val maybeUser = db.run(User.filter(_.username === username).result.headOption)
 
               onSuccess(maybeUser) {
-                case Some(user) => complete(user.copy(password = ""))
+                case Some(user) => complete(clearPassword(user))
                 case None => complete(StatusCodes.NotFound)
               }
             } ~

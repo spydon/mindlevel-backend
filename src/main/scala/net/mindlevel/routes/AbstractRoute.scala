@@ -6,6 +6,7 @@ import java.util.UUID
 
 import akka.http.scaladsl.server.Route
 import com.github.t3hnar.bcrypt._
+import net.mindlevel.models.Tables
 import net.mindlevel.models.Tables._
 import slick.jdbc.MySQLProfile.api._
 import spray.json.DefaultJsonProtocol._
@@ -197,4 +198,5 @@ trait AbstractRoute {
     }
   }
 
+  protected def clearPassword(user: Tables.User#TableElementType) = user.copy(password = "")
 }
