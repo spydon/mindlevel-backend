@@ -17,7 +17,7 @@ import spray.json.DefaultJsonProtocol._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 object AccomplishmentRoute extends AbstractRoute {
 
@@ -126,42 +126,50 @@ object AccomplishmentRoute extends AbstractRoute {
               get {
                 headerValueByName("X-Session") { session =>
                   onSuccess(nameFromSession(session)) {
+                    case None =>
+                      complete(StatusCodes.Unauthorized)
                     case Some(username) =>
                       val scoreValue = 1
                       val accomplishmentLike =
                         AccomplishmentLikeRow(
                           username = username, accomplishmentId = id, score = scoreValue, created = now())
-                      val maybeInserted = db.run(AccomplishmentLike += accomplishmentLike)
-                      def scoreResponse(first: Boolean) = {
-                        val maybeLikes = db.run(Accomplishment.filter(_.id === id).result.headOption)
-                        onSuccess(maybeLikes) { likes =>
-                          complete(LikeResponse(first, likes.get.score.toString))
+                      val maybeAllowed = db.run(UserAccomplishment.filter(_.username === username).result.headOption)
+                      onSuccess(maybeAllowed) { accomplishments: Option[UserAccomplishment#TableElementType] =>
+                        // This makes sure that the user has a finished accomplishment before registering like
+                        val maybeInserted = accomplishments match {
+                          case None => Future.failed(new Exception("User does not have an accomplishment yet"))
+                          case _ => db.run(AccomplishmentLike += accomplishmentLike)
                         }
-                      }
 
-                      onComplete(maybeInserted) {
-                        case Success(_) =>
-                          // Give score to affected users
-                          // Get all users from user_accomplishment join with user
-                          // increment score for accomplishment and user
-                          val updateScore =
-                            sqlu"""UPDATE user u, accomplishment a
+                        def scoreResponse(first: Boolean) = {
+                          val maybeLikes = db.run(Accomplishment.filter(_.id === id).result.headOption)
+                          onSuccess(maybeLikes) { likes =>
+                            complete(LikeResponse(first, likes.get.score.toString))
+                          }
+                        }
+
+                        onComplete(maybeInserted) {
+                          case Success(_) =>
+                            // Give score to affected users
+                            // Get all users from user_accomplishment join with user
+                            // increment score for accomplishment and user
+                            val updateScore =
+                              sqlu"""UPDATE user u, accomplishment a
                               join user_accomplishment
                               join accomplishment on user_accomplishment.accomplishment_id = accomplishment.id
                               SET u.score = u.score + ${scoreValue}, a.score = a.score + ${scoreValue}
                               WHERE a.id = ${id}"""
 
-                          db.run(updateScore) // Fire and forget
-                          scoreResponse(true)
-                        case _ =>
-                          scoreResponse(false) // Already liked
+                            db.run(updateScore) // Fire and forget, significant race?
+                            scoreResponse(true)
+                          case _ =>
+                            scoreResponse(false) // Already liked or user does not have 1 accomplishment yet
+                        }
                       }
-                    case None =>
-                      complete(StatusCodes.Unauthorized)
                   }
                 }
               }
-            } ~
+        } ~
             path("contributor") {
               get {
                 onSuccess(maybeAccomplishment) {

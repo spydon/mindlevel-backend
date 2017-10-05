@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`user` (
   `username` VARCHAR(255) NOT NULL,
   `password` VARCHAR(255) NOT NULL,
   `description` VARCHAR(1024) NULL,
-  `image` VARCHAR(255) NULL,
+  `image` VARCHAR(255) NULL DEFAULT 'default_user.svg',
   `score` INT NOT NULL,
   `created` BIGINT NOT NULL,
   `last_active` BIGINT,
