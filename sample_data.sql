@@ -1,5 +1,8 @@
-INSERT INTO user (username, password, description, image, score, created) 
-VALUES ("spydon", "$2a$10$dNvnLK3ZYSyjlwyyAc0Me.FbNvi2yEf6KPKKld62edoC8gChkVGpC", "Sample description", "1.jpg", 0, 0);
+INSERT INTO user (username, description, image, score, created) 
+VALUES ("spydon", "Sample description", "1.jpg", 0, 0);
+
+INSERT INTO user_extra (username, password, email) 
+VALUES ("spydon", "$2a$10$dNvnLK3ZYSyjlwyyAc0Me.FbNvi2yEf6KPKKld62edoC8gChkVGpC", "me@lukas.fyi");
 
 INSERT INTO mission (title, description, image, creator, validated) 
 VALUES ("New mission with extremely long title, is it fine?", "The description is actually also quite long how will all the views handle such a long description? I don't know, I guess we will find out!", "2.jpg", "spydon", True);

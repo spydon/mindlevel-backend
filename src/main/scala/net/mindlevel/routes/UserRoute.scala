@@ -29,22 +29,22 @@ object UserRoute extends AbstractRoute {
     pathPrefix("user") {
       pathEndOrSingleSlash {
         get {
-          onSuccess(db.run(User.result)) { users =>
-            complete(users.map(clearPassword))
+          onSuccess(db.run(User.result)) {
+            complete(_)
           }
         } ~
         post {
           entity(as[LoginFormat]) { login =>
-            val processedUser =
-              UserRow(username = login.username, password = login.password.get.bcrypt, score = 0, created = now)
-            val maybeInserted = db.run(User += processedUser)
-            onSuccess(maybeInserted) {
-              case 1 =>
-                db.run(Session += SessionRow(username = login.username, session = None))
-                complete(StatusCodes.OK)
-              case _ =>
-                complete(StatusCodes.BadRequest)
-            }
+            val actions = mutable.ArrayBuffer[DBIOAction[Int, NoStream, Write with Transactional]]()
+            val userExtra = UserExtraRow(username = login.username, password = login.password.get.bcrypt, email = "")
+            val processedUser = UserRow(username = login.username, score = 0, created = now)
+
+            actions += (User += processedUser)
+            actions += (UserExtra += userExtra)
+
+            val maybeUpdated = db.run(DBIO.seq(actions.map(_.transactionally): _*))
+
+            onSuccess(maybeUpdated)(complete(StatusCodes.OK))
           }
         }
       } ~
@@ -68,7 +68,7 @@ object UserRoute extends AbstractRoute {
               val maybeUser = db.run(User.filter(_.username === username).result.headOption)
 
               onSuccess(maybeUser) {
-                case Some(user) => complete(clearPassword(user))
+                case Some(user) => complete(user)
                 case None => complete(StatusCodes.NotFound)
               }
             } ~
@@ -83,7 +83,7 @@ object UserRoute extends AbstractRoute {
                         case b: BodyPart if b.name == "image" =>
                           val file = File.createTempFile("upload", "tmp")
                           b.entity.dataBytes.runWith(FileIO.toPath(file.toPath))
-                            .map(_ => "image" -> S3Util.put(file))
+                            .map(_ => "image" -> S3Util.put(file)) // TODO: Handle exception or map to akka-http error
 
                         case b: BodyPart =>
                           b.toStrict(2.seconds).map(strict => b.name -> strict.entity.data.utf8String)
@@ -96,14 +96,22 @@ object UserRoute extends AbstractRoute {
                         }
                       }
 
+                      val extraRow = allParts.flatMap { parts => Unmarshal(parts("extra")).to[UserExtraRow] }
+
                       val isUpdated = row.flatMap { userRow =>
                         isAuthorized(userRow.username, session) flatMap {
                           case true =>
                             val actions = mutable.ArrayBuffer[DBIOAction[Int, NoStream, Write with Transactional]]()
                             val query = User.withFilter(_.username === userRow.username)
+                            val extraQuery = UserExtra.withFilter(_.username === userRow.username)
 
-                            if (!userRow.password.isEmpty) {
-                              actions += query.map(_.password).update(userRow.password.bcrypt)
+                            extraRow.map { userExtraRow =>
+                              if (!userExtraRow.password.isEmpty) {
+                                actions += extraQuery.map(_.password).update(userExtraRow.password.bcrypt)
+                              }
+                              if (!userExtraRow.email.isEmpty) {
+                                actions += extraQuery.map(_.email).update(userExtraRow.email)
+                              }
                             }
 
                             if (userRow.description.isDefined) {

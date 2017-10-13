@@ -55,7 +55,8 @@ trait AbstractRoute {
 
   protected implicit val accomplishmentFormat = jsonFormat7(AccomplishmentRow)
   protected implicit val missionFormat = jsonFormat7(MissionRow)
-  protected implicit val userFormat = jsonFormat7(UserRow)
+  protected implicit val userFormat = jsonFormat6(UserRow)
+  protected implicit val userExtraFormat = jsonFormat3(UserExtraRow)
   protected implicit val userAccomplishmentFormat = jsonFormat2(UserAccomplishmentRow)
   protected implicit val loginFormat = jsonFormat4(LoginFormat) // TODO: Refactor this
   protected implicit val likeResponseFormat = jsonFormat2(LikeResponse)
@@ -128,7 +129,7 @@ trait AbstractRoute {
 
   protected def updatePassword(user: LoginFormat): Future[String] = {
     val q = for {
-      u <- User if u.username === user.username
+      u <- UserExtra if u.username === user.username
       s <- Session if u.username === s.username
     } yield (u.username, u.password, s.session)
 
@@ -139,7 +140,7 @@ trait AbstractRoute {
         auth match {
           case (username, password, session) =>
             if (user.session == session && user.password.getOrElse("").isBcrypted(password)) {
-              val q = for (u <- User if u.username === username) yield u.password
+              val q = for (u <- UserExtra if u.username === username) yield u.password
               updateSession(user) flatMap {
                 case Some(newSession) =>
                   user.newPassword match {
@@ -169,7 +170,7 @@ trait AbstractRoute {
 
   protected def updateSession(user: LoginFormat, logout: Boolean = false): Future[Option[String]] = {
     val q = for {
-      u <- User if u.username === user.username
+      u <- UserExtra if u.username === user.username
       s <- Session if u.username === s.username
     } yield (u.username, u.password, s.session)
 
@@ -197,6 +198,4 @@ trait AbstractRoute {
         throw AuthException("Could not update the session")
     }
   }
-
-  protected def clearPassword(user: Tables.User#TableElementType) = user.copy(password = "")
 }

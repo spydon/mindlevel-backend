@@ -5,13 +5,13 @@ SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
 -- -----------------------------------------------------
 -- Uncomment to drop all
 -- -----------------------------------------------------
--- DROP SCHEMA IF EXISTS `mindlevel` ;
--- DROP TABLE IF EXISTS `mindlevel`.`user` ;
--- DROP TABLE IF EXISTS `mindlevel`.`session` ;
--- DROP TABLE IF EXISTS `mindlevel`.`mission` ;
--- DROP TABLE IF EXISTS `mindlevel`.`accomplishment` ;
--- DROP TABLE IF EXISTS `mindlevel`.`user_accomplishment` ;
--- DROP TABLE IF EXISTS `mindlevel`.`accomplishment_like` ;
+DROP SCHEMA IF EXISTS `mindlevel` ;
+DROP TABLE IF EXISTS `mindlevel`.`user` ;
+DROP TABLE IF EXISTS `mindlevel`.`session` ;
+DROP TABLE IF EXISTS `mindlevel`.`mission` ;
+DROP TABLE IF EXISTS `mindlevel`.`accomplishment` ;
+DROP TABLE IF EXISTS `mindlevel`.`user_accomplishment` ;
+DROP TABLE IF EXISTS `mindlevel`.`accomplishment_like` ;
 
 -- -----------------------------------------------------
 -- Schema mindlevel
@@ -19,13 +19,13 @@ SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
 CREATE SCHEMA IF NOT EXISTS `mindlevel` DEFAULT CHARACTER SET utf8 ;
 USE `mindlevel` ;
 
+
 -- -----------------------------------------------------
 -- Table `mindlevel`.`user`
 -- -----------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS `mindlevel`.`user` (
   `username` VARCHAR(255) NOT NULL,
-  `password` VARCHAR(255) NOT NULL,
   `description` VARCHAR(1024) NULL,
   `image` VARCHAR(255) NULL DEFAULT 'user.jpg',
   `score` INT NOT NULL,
@@ -33,6 +33,25 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`user` (
   `last_active` BIGINT,
   PRIMARY KEY (`username`))
 ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mindlevel`.`user_extra`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `mindlevel`.`user_extra` (
+  `username` VARCHAR(255) NOT NULL,
+  `password` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`username`),
+  INDEX `fk_user_extra_idx` (`username` ASC),
+  CONSTRAINT `fk_user_extra`
+    FOREIGN KEY (`username`)
+    REFERENCES `mindlevel`.`user` (`username`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
 
 -- -----------------------------------------------------
 -- Table `mindlevel`.`session`

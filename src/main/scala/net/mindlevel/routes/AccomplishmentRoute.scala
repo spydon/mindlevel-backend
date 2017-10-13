@@ -180,7 +180,7 @@ object AccomplishmentRoute extends AbstractRoute {
                     } yield (u)
 
                     onSuccess(db.run(innerJoin.result)) { users =>
-                      complete(users.map(clearPassword))
+                      complete(users)
                     }
                   case None =>
                     complete(StatusCodes.NotFound)
