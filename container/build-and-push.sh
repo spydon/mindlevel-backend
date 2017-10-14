@@ -10,6 +10,7 @@ awsRepo="589361660625.dkr.ecr.eu-central-1.amazonaws.com/mindlevel:latest"
 echo "==========================================" &&
 echo " Remember that the RELEASE branch is used " &&
 echo "==========================================" &&
+sleep 4 &&
 command -v systemctl >/dev/null 2>/dev/null && sudo systemctl start docker &&
 echo "Started docker"
 
