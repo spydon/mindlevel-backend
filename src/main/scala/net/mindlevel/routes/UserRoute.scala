@@ -33,20 +33,22 @@ object UserRoute extends AbstractRoute {
             complete(_)
           }
         } ~
-        post {
-          entity(as[LoginFormat]) { login =>
-            val actions = mutable.ArrayBuffer[DBIOAction[Int, NoStream, Write with Transactional]]()
-            val userExtra = UserExtraRow(username = login.username, password = login.password.get.bcrypt, email = "")
-            val processedUser = UserRow(username = login.username, score = 0, created = now)
+          post {
+            entity(as[LoginFormat]) { login =>
+              val actions = mutable.ArrayBuffer[DBIOAction[Int, NoStream, Write with Transactional]]()
+              val userExtra = UserExtraRow(username = login.username, password = login.password.get.bcrypt, email = "")
+              val processedUser = UserRow(username = login.username, score = 0, created = now)
+              val emptySession = SessionRow(username = login.username, session = null)
 
-            actions += (User += processedUser)
-            actions += (UserExtra += userExtra)
+              actions += (User += processedUser)
+              actions += (UserExtra += userExtra)
+              actions += (Session += emptySession)
 
-            val maybeUpdated = db.run(DBIO.seq(actions.map(_.transactionally): _*))
+              val maybeUpdated = db.run(DBIO.seq(actions.map(_.transactionally): _*))
 
-            onSuccess(maybeUpdated)(complete(StatusCodes.OK))
+              onSuccess(maybeUpdated)(complete(StatusCodes.OK))
+            }
           }
-        }
       } ~
         path("usernames") {
           get {
@@ -137,12 +139,25 @@ object UserRoute extends AbstractRoute {
                   }
                 } ~
                   entity(as[LoginFormat]) { user =>
-                  onSuccess(updatePassword(user)) { session =>
-                    complete(session)
+                    onSuccess(updatePassword(user)) { session =>
+                      complete(session)
+                    }
+                  }
+              }
+          } ~
+            path("email") {
+              get {
+                headerValueByName("X-Session") { session =>
+                  onSuccess(isAuthorized(username, session)) {
+                    case true =>
+                      val query = db.run(UserExtra.filter(_.username === username).map(_.email).result.headOption)
+                      onSuccess(query)(complete(_))
+                    case false =>
+                      complete(StatusCodes.Unauthorized)
                   }
                 }
               }
-          } ~
+            } ~
             path("image") {
               post {
                 headerValueByName("X-Session") { session =>
