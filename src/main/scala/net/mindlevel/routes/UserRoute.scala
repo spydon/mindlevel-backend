@@ -108,12 +108,15 @@ object UserRoute extends AbstractRoute {
                             val extraQuery = UserExtra.withFilter(_.username === userRow.username)
 
                             extraRow.map { userExtraRow =>
+                              // Fire and forget ue to that this field might not exist
+                              val extraActions = mutable.ArrayBuffer[DBIOAction[Int, NoStream, Write with Transactional]]()
                               if (!userExtraRow.password.isEmpty) {
-                                actions += extraQuery.map(_.password).update(userExtraRow.password.bcrypt)
+                                extraActions += extraQuery.map(_.password).update(userExtraRow.password.bcrypt)
                               }
                               if (!userExtraRow.email.isEmpty) {
-                                actions += extraQuery.map(_.email).update(userExtraRow.email)
+                                extraActions += extraQuery.map(_.email).update(userExtraRow.email)
                               }
+                              db.run(DBIO.seq(extraActions.map(_.transactionally): _*))
                             }
 
                             if (userRow.description.isDefined) {
@@ -194,9 +197,6 @@ object UserRoute extends AbstractRoute {
                 val accomplishments = db.run(UserAccomplishment.filter(_.username === username).flatMap( ua =>
                   Accomplishment.filter(_.id === ua.accomplishmentId)
                 ).result)
-
-                // TODO: Check if this is OK
-                //onSuccess(accomplishments)(complete(_))
                 complete(accomplishments)
               }
             }
