@@ -10,7 +10,7 @@ object PingRoute extends AbstractRoute {
   def route: Route =
     path("ping") {
       get {
-        val maybeResult = db.run(Mission.take(1).result.headOption)
+        val maybeResult = db.run(Challenge.take(1).result.headOption)
 
         onSuccess(maybeResult) {
           case Some(_) => complete(StatusCodes.OK)

@@ -54,7 +54,7 @@ trait AbstractRoute {
   )
 
   protected implicit val accomplishmentFormat = jsonFormat7(AccomplishmentRow)
-  protected implicit val missionFormat = jsonFormat7(MissionRow)
+  protected implicit val missionFormat = jsonFormat7(ChallengeRow)
   protected implicit val userFormat = jsonFormat6(UserRow)
   protected implicit val userExtraFormat = jsonFormat3(UserExtraRow)
   protected implicit val userAccomplishmentFormat = jsonFormat2(UserAccomplishmentRow)
@@ -98,12 +98,12 @@ trait AbstractRoute {
     }
   }
 
-  protected def isAuthorizedToMission(missionId: Int, session: String): Future[Boolean] = {
+  protected def isAuthorizedToChallenge(missionId: Int, session: String): Future[Boolean] = {
     val maybeUser = nameFromSession(session)
     maybeUser.flatMap {
       case Some(username) =>
         val isAuthorized =
-          db.run(Mission
+          db.run(Challenge
             .filter(_.id === missionId)
             .filter(_.creator === username).result.headOption)
         isAuthorized.map {

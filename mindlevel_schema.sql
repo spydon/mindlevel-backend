@@ -8,7 +8,7 @@ SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
 DROP SCHEMA IF EXISTS `mindlevel` ;
 DROP TABLE IF EXISTS `mindlevel`.`user` ;
 DROP TABLE IF EXISTS `mindlevel`.`session` ;
-DROP TABLE IF EXISTS `mindlevel`.`mission` ;
+DROP TABLE IF EXISTS `mindlevel`.`challenge` ;
 DROP TABLE IF EXISTS `mindlevel`.`accomplishment` ;
 DROP TABLE IF EXISTS `mindlevel`.`user_accomplishment` ;
 DROP TABLE IF EXISTS `mindlevel`.`accomplishment_like` ;
@@ -71,10 +71,10 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mindlevel`.`mission`
+-- Table `mindlevel`.`challenge`
 -- -----------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS `mindlevel`.`mission` (
+CREATE TABLE IF NOT EXISTS `mindlevel`.`challenge` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `title` VARCHAR(255) NOT NULL,
   `description` VARCHAR(1024) NOT NULL,
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`accomplishment` (
   INDEX `fk_accomplishment_mission_idx` (`mission_id` ASC),
   CONSTRAINT `fk_accomplishment_mission`
     FOREIGN KEY (`mission_id`)
-    REFERENCES `mindlevel`.`mission` (`id`)
+    REFERENCES `mindlevel`.`challenge` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;

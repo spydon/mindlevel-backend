@@ -12,17 +12,17 @@ import slick.jdbc.MySQLProfile.api._
 import spray.json.DefaultJsonProtocol._
 import scala.util.{Failure, Success}
 
-object MissionRoute extends AbstractRoute {
+object ChallengeRoute extends AbstractRoute {
   def route: Route =
-    pathPrefix("mission") {
+    pathPrefix("challenge") {
       pathEndOrSingleSlash {
         get {
-          complete(db.run(Mission.result))
+          complete(db.run(Challenge.result))
         } ~
           post {
-            entity(as[MissionRow]) { mission =>
-              val nonValidatedMission = mission.copy(validated = false)
-              val maybeInserted = db.run(Mission += nonValidatedMission)
+            entity(as[ChallengeRow]) { challenge =>
+              val nonValidatedChallenge = challenge.copy(validated = false)
+              val maybeInserted = db.run(Challenge += nonValidatedChallenge)
               onSuccess(maybeInserted) {
                 case 1 => complete(StatusCodes.OK)
                 case _ => complete(StatusCodes.BadRequest)
@@ -33,13 +33,13 @@ object MissionRoute extends AbstractRoute {
         pathPrefix("latest") {
           pathEndOrSingleSlash {
             get {
-              val missions = db.run(Mission.sortBy(_.created.desc).take(missionPageSize).result)
+              val missions = db.run(Challenge.sortBy(_.created.desc).take(missionPageSize).result)
               complete(missions)
             }
           } ~
             path(IntNumber) { pageSize =>
               get {
-                val missions = db.run(Mission.sortBy(_.created.desc).take(pageSize).result)
+                val missions = db.run(Challenge.sortBy(_.created.desc).take(pageSize).result)
                 complete(missions)
               }
             } ~
@@ -51,7 +51,7 @@ object MissionRoute extends AbstractRoute {
                   val upper = between(1).toInt
                   val take = upper - drop
                   if (drop < upper) {
-                    val missions = db.run(Mission.sortBy(_.created.desc).drop(drop).take(take).result)
+                    val missions = db.run(Challenge.sortBy(_.created.desc).drop(drop).take(take).result)
                     complete(missions)
                   } else {
                     complete(StatusCodes.BadRequest)
@@ -65,10 +65,10 @@ object MissionRoute extends AbstractRoute {
         pathPrefix(IntNumber) { id =>
           pathEndOrSingleSlash {
             get {
-              val maybeMission = db.run(Mission.filter(_.id === id).result.headOption)
+              val maybeChallenge = db.run(Challenge.filter(_.id === id).result.headOption)
 
-              onSuccess(maybeMission) {
-                case Some(mission) => complete(mission)
+              onSuccess(maybeChallenge) {
+                case Some(challenge) => complete(challenge)
                 case None => complete(StatusCodes.NotFound)
               }
             }
@@ -76,7 +76,7 @@ object MissionRoute extends AbstractRoute {
             path("image") {
               post {
                 headerValueByName("X-Session") { session =>
-                  onSuccess(isAuthorizedToMission(id, session)) {
+                  onSuccess(isAuthorizedToChallenge(id, session)) {
                     case true =>
                       extractRequestContext { ctx =>
                         implicit val materializer = ctx.materializer
@@ -89,7 +89,7 @@ object MissionRoute extends AbstractRoute {
                             onSuccess(writeResult) { result =>
                               result.status match {
                                 case Success(_) =>
-                                  val q = for {m <- Mission if m.id === id} yield m.image
+                                  val q = for {m <- Challenge if m.id === id} yield m.image
                                   db.run(q.update(filename)) // Fire and forget
                                   complete(s"Successfully written ${result.count} bytes")
                                 case Failure(e) =>
@@ -116,12 +116,12 @@ object MissionRoute extends AbstractRoute {
               val between = range.split("-")
               val lower = between(0).toInt
               val upper = between(1).toInt
-              val missions = db.run(Mission.filter(_.id >= lower).filter(_.id <= upper).result)
+              val missions = db.run(Challenge.filter(_.id >= lower).filter(_.id <= upper).result)
               complete(missions)
             } else if (range.contains(",")) {
               val ids = range.split(",").map(_.toInt)
               val query = for {
-                m <- Mission if m.id inSetBind ids
+                m <- Challenge if m.id inSetBind ids
               } yield m
               val missions = db.run(query.result)
               complete(missions)
