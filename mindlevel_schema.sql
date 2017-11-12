@@ -83,8 +83,8 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`challenge` (
   `creator` VARCHAR(255) NOT NULL,
   `validated` TINYINT(1) NOT NULL,
   PRIMARY KEY (`id`),
-  INDEX `fk_mission_user_idx` (`creator` ASC),
-  CONSTRAINT `fk_mission_user`
+  INDEX `fk_challenge_user_idx` (`creator` ASC),
+  CONSTRAINT `fk_challenge_user`
     FOREIGN KEY (`creator`)
     REFERENCES `mindlevel`.`user` (`username`)
     ON DELETE NO ACTION
@@ -101,13 +101,13 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`accomplishment` (
   `title` VARCHAR(255) NOT NULL,
   `description` VARCHAR(1024) NOT NULL,
   `image` VARCHAR(255) NOT NULL,
-  `mission_id` INT NOT NULL,
+  `challenge_id` INT NOT NULL,
   `score` INT NOT NULL DEFAULT 0,
   `created` BIGINT,
   PRIMARY KEY (`id`),
-  INDEX `fk_accomplishment_mission_idx` (`mission_id` ASC),
-  CONSTRAINT `fk_accomplishment_mission`
-    FOREIGN KEY (`mission_id`)
+  INDEX `fk_accomplishment_challenge_idx` (`challenge_id` ASC),
+  CONSTRAINT `fk_accomplishment_challenge`
+    FOREIGN KEY (`challenge_id`)
     REFERENCES `mindlevel`.`challenge` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)

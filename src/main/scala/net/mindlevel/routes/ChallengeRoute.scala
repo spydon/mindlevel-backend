@@ -106,7 +106,7 @@ object ChallengeRoute extends AbstractRoute {
             } ~
             path("accomplishment") {
               get {
-                complete(db.run(Accomplishment.filter(_.missionId === id).result))
+                complete(db.run(Accomplishment.filter(_.challengeId === id).result))
               }
             }
         } ~

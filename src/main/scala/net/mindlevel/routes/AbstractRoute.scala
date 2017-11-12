@@ -98,13 +98,13 @@ trait AbstractRoute {
     }
   }
 
-  protected def isAuthorizedToChallenge(missionId: Int, session: String): Future[Boolean] = {
+  protected def isAuthorizedToChallenge(challengeId: Int, session: String): Future[Boolean] = {
     val maybeUser = nameFromSession(session)
     maybeUser.flatMap {
       case Some(username) =>
         val isAuthorized =
           db.run(Challenge
-            .filter(_.id === missionId)
+            .filter(_.id === challengeId)
             .filter(_.creator === username).result.headOption)
         isAuthorized.map {
           case Some(_) => true
