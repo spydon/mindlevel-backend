@@ -13,7 +13,7 @@ VALUES ("Short and tall picture", "The description is short", "5.jpg", "spydon",
 INSERT INTO challenge (title, description, image, creator, validated)
 VALUES ("Medium length challenge title, it is fine.", "The description is actually also quite medium how will all the views handle such a long description? I don't know, I guess we will find out!", "5.jpg", "spydon", True);
 
-INSERT INTO accomplishment (title, description, image, mission_id, created)
+INSERT INTO accomplishment (title, description, image, challenge_id, created)
 VALUES ("Accomplishment Title!", "This was quite an accomplishment, wasn't it?", "2.jpg", 1, 0);
 
 INSERT INTO user_accomplishment (username, accomplishment_id)
