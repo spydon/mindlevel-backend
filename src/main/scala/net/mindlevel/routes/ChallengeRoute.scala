@@ -33,14 +33,14 @@ object ChallengeRoute extends AbstractRoute {
         pathPrefix("latest") {
           pathEndOrSingleSlash {
             get {
-              val missions = db.run(Challenge.sortBy(_.created.desc).take(missionPageSize).result)
-              complete(missions)
+              val challenges = db.run(Challenge.sortBy(_.created.desc).take(challengePageSize).result)
+              complete(challenges)
             }
           } ~
             path(IntNumber) { pageSize =>
               get {
-                val missions = db.run(Challenge.sortBy(_.created.desc).take(pageSize).result)
-                complete(missions)
+                val challenges = db.run(Challenge.sortBy(_.created.desc).take(pageSize).result)
+                complete(challenges)
               }
             } ~
             path(Segment) { range =>
@@ -51,8 +51,8 @@ object ChallengeRoute extends AbstractRoute {
                   val upper = between(1).toInt
                   val take = upper - drop
                   if (drop < upper) {
-                    val missions = db.run(Challenge.sortBy(_.created.desc).drop(drop).take(take).result)
-                    complete(missions)
+                    val challenges = db.run(Challenge.sortBy(_.created.desc).drop(drop).take(take).result)
+                    complete(challenges)
                   } else {
                     complete(StatusCodes.BadRequest)
                   }
@@ -116,15 +116,15 @@ object ChallengeRoute extends AbstractRoute {
               val between = range.split("-")
               val lower = between(0).toInt
               val upper = between(1).toInt
-              val missions = db.run(Challenge.filter(_.id >= lower).filter(_.id <= upper).result)
-              complete(missions)
+              val challenges = db.run(Challenge.filter(_.id >= lower).filter(_.id <= upper).result)
+              complete(challenges)
             } else if (range.contains(",")) {
               val ids = range.split(",").map(_.toInt)
               val query = for {
                 m <- Challenge if m.id inSetBind ids
               } yield m
-              val missions = db.run(query.result)
-              complete(missions)
+              val challenges = db.run(query.result)
+              complete(challenges)
             } else {
               complete(StatusCodes.BadRequest)
             }

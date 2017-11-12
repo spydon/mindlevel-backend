@@ -23,7 +23,7 @@ trait AbstractRoute {
   def route: Route
   protected val db = DBSingleton.db
   protected val accomplishmentPageSize = 20
-  protected val missionPageSize = 20
+  protected val challengePageSize = 20
 
   protected def now(): Long = Instant.now.getEpochSecond
 
@@ -54,7 +54,7 @@ trait AbstractRoute {
   )
 
   protected implicit val accomplishmentFormat = jsonFormat7(AccomplishmentRow)
-  protected implicit val missionFormat = jsonFormat7(ChallengeRow)
+  protected implicit val challengeFormat = jsonFormat7(ChallengeRow)
   protected implicit val userFormat = jsonFormat6(UserRow)
   protected implicit val userExtraFormat = jsonFormat3(UserExtraRow)
   protected implicit val userAccomplishmentFormat = jsonFormat2(UserAccomplishmentRow)
