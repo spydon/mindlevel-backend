@@ -14,10 +14,9 @@ import net.mindlevel.models.Tables._
 import slick.jdbc.MySQLProfile.api._
 import spray.json.DefaultJsonProtocol._
 
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import scala.concurrent.duration._
+import scala.util.Success
 
 object AccomplishmentRoute extends AbstractRoute {
 
@@ -46,12 +45,12 @@ object AccomplishmentRoute extends AbstractRoute {
 
                     val row = allParts.flatMap { parts =>
                       Unmarshal(parts("accomplishment")).to[AccomplishmentRow].map {
-                        _.copy(image = parts("image"), score = 0, created = Some(now))
+                        _.copy(image = parts("image"), score = 0, created = Some(now()))
                       }
                     }
 
                     val contributorsF = allParts.flatMap { parts =>
-                      Unmarshal(parts("contributors")).to[Contributors].map(_.contributors)
+                      Unmarshal(parts("contributors")).to[List[String]]
                     }
 
                     onSuccess(row) { accomplishment =>
@@ -157,8 +156,8 @@ object AccomplishmentRoute extends AbstractRoute {
                               sqlu"""UPDATE user u, accomplishment a
                               join user_accomplishment
                               join accomplishment on user_accomplishment.accomplishment_id = accomplishment.id
-                              SET u.score = u.score + ${scoreValue}, a.score = a.score + ${scoreValue}
-                              WHERE a.id = ${id}"""
+                              SET u.score = u.score + $scoreValue, a.score = a.score + $scoreValue
+                              WHERE a.id = $id"""
 
                             db.run(updateScore) // Fire and forget, significant race?
                             scoreResponse(true)
@@ -177,7 +176,7 @@ object AccomplishmentRoute extends AbstractRoute {
                     val innerJoin = for {
                       (_, u) <-
                         UserAccomplishment.filter(_.accomplishmentId === id) join User on (_.username === _.username)
-                    } yield (u)
+                    } yield u
 
                     onSuccess(db.run(innerJoin.result)) { users =>
                       complete(users)
