@@ -6,6 +6,7 @@ logLevel := Level.Warn
 scalaVersion := "2.12.3"
 val slickVersion = "3.2.0"
 val akkaVersion = "10.0.9"
+val scrimageVersion = "3.0.0-alpha4"
 
 libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-reflect" % scalaVersion.value,
@@ -18,6 +19,9 @@ libraryDependencies ++= Seq(
   "ch.megard" %% "akka-http-cors" % "0.2.1",
   "jp.co.bizreach" %% "aws-s3-scala" % "0.0.11",
   "org.slf4j" % "slf4j-nop" % "1.6.4",
+  "com.sksamuel.scrimage" %% "scrimage-core" % scrimageVersion,
+  "com.sksamuel.scrimage" %% "scrimage-io-extra" % scrimageVersion,
+  "com.sksamuel.scrimage" %% "scrimage-filters" % scrimageVersion,
   "mysql" % "mysql-connector-java" % "6.0.6"
 )
 

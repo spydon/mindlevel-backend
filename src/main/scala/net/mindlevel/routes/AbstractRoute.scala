@@ -6,7 +6,6 @@ import java.util.UUID
 
 import akka.http.scaladsl.server.Route
 import com.github.t3hnar.bcrypt._
-import net.mindlevel.models.Tables
 import net.mindlevel.models.Tables._
 import slick.jdbc.MySQLProfile.api._
 import spray.json.DefaultJsonProtocol._
@@ -62,7 +61,7 @@ trait AbstractRoute {
   protected implicit val likeResponseFormat = jsonFormat2(LikeResponse)
   protected implicit val contributorsFormat = jsonFormat1(Contributors)
 
-  protected case class AuthException(msg: String, cause: Throwable = null) extends RuntimeException(msg, cause)
+  protected case class AuthException(msg: String) extends IllegalAccessException(msg)
 
   protected def nameFromSession(session: String): Future[Option[String]] = {
     db.run(Session.filter(_.session === session).map(_.username).result.headOption)
