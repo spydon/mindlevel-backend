@@ -5,18 +5,18 @@ SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
 -- -----------------------------------------------------
 -- Uncomment to drop all
 -- -----------------------------------------------------
--- DROP SCHEMA IF EXISTS `mindlevel` ;
--- DROP TABLE IF EXISTS `mindlevel`.`user` ;
--- DROP TABLE IF EXISTS `mindlevel`.`session` ;
--- DROP TABLE IF EXISTS `mindlevel`.`challenge` ;
--- DROP TABLE IF EXISTS `mindlevel`.`accomplishment` ;
--- DROP TABLE IF EXISTS `mindlevel`.`user_accomplishment` ;
--- DROP TABLE IF EXISTS `mindlevel`.`accomplishment_like` ;
+DROP SCHEMA IF EXISTS `mindlevel` ;
+DROP TABLE IF EXISTS `mindlevel`.`user` ;
+DROP TABLE IF EXISTS `mindlevel`.`session` ;
+DROP TABLE IF EXISTS `mindlevel`.`challenge` ;
+DROP TABLE IF EXISTS `mindlevel`.`accomplishment` ;
+DROP TABLE IF EXISTS `mindlevel`.`user_accomplishment` ;
+DROP TABLE IF EXISTS `mindlevel`.`accomplishment_like` ;
 
 -- -----------------------------------------------------
 -- Schema mindlevel
 -- -----------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS `mindlevel` DEFAULT CHARACTER SET utf8 ;
+CREATE SCHEMA IF NOT EXISTS `mindlevel` DEFAULT CHARACTER SET utf8mb4 ;
 USE `mindlevel` ;
 
 
