@@ -25,9 +25,9 @@ USE `mindlevel` ;
 -- -----------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS `mindlevel`.`user` (
-  `username` VARCHAR(255) NOT NULL,
+  `username` VARCHAR(191) NOT NULL,
   `description` VARCHAR(1024) NULL,
-  `image` VARCHAR(255) NULL DEFAULT 'user.jpg',
+  `image` VARCHAR(191) NULL DEFAULT 'user.jpg',
   `score` INT NOT NULL,
   `created` BIGINT NOT NULL,
   `last_active` BIGINT,
@@ -40,9 +40,9 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS `mindlevel`.`user_extra` (
-  `username` VARCHAR(255) NOT NULL,
-  `password` VARCHAR(255) NOT NULL,
-  `email` VARCHAR(255) NOT NULL,
+  `username` VARCHAR(191) NOT NULL,
+  `password` VARCHAR(191) NOT NULL,
+  `email` VARCHAR(191) NOT NULL,
   PRIMARY KEY (`username`),
   INDEX `fk_user_extra_idx` (`username` ASC),
   CONSTRAINT `fk_user_extra`
@@ -58,8 +58,8 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS `mindlevel`.`session` (
-  `username` VARCHAR(255) NOT NULL,
-  `session` VARCHAR(255),
+  `username` VARCHAR(191) NOT NULL,
+  `session` VARCHAR(191),
   PRIMARY KEY (`username`),
   INDEX `fk_session_user_idx` (`username` ASC),
   CONSTRAINT `fk_session_user`
@@ -76,11 +76,11 @@ ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS `mindlevel`.`challenge` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `title` VARCHAR(255) NOT NULL,
+  `title` VARCHAR(191) NOT NULL,
   `description` VARCHAR(1024) NOT NULL,
-  `image` VARCHAR(255) NOT NULL,
+  `image` VARCHAR(191) NOT NULL,
   `created` BIGINT NOT NULL,
-  `creator` VARCHAR(255) NOT NULL,
+  `creator` VARCHAR(191) NOT NULL,
   `validated` TINYINT(1) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `fk_challenge_user_idx` (`creator` ASC),
@@ -98,9 +98,9 @@ ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS `mindlevel`.`accomplishment` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `title` VARCHAR(255) NOT NULL,
+  `title` VARCHAR(191) NOT NULL,
   `description` VARCHAR(1024) NOT NULL,
-  `image` VARCHAR(255) NOT NULL,
+  `image` VARCHAR(191) NOT NULL,
   `challenge_id` INT NOT NULL,
   `score` INT NOT NULL DEFAULT 0,
   `created` BIGINT,
@@ -119,7 +119,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS `mindlevel`.`user_accomplishment` (
-  `username` VARCHAR(255) NOT NULL,
+  `username` VARCHAR(191) NOT NULL,
   `accomplishment_id` INT NOT NULL,
   PRIMARY KEY (`username`, `accomplishment_id`),
   INDEX `fk_user_accomplishment_2_idx` (`accomplishment_id` ASC),
@@ -141,7 +141,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS `mindlevel`.`accomplishment_like` (
-  `username` VARCHAR(255) NOT NULL,
+  `username` VARCHAR(191) NOT NULL,
   `accomplishment_id` INT NOT NULL,
   `created` BIGINT NOT NULL,
   `score` INT NOT NULL,
