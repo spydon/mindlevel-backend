@@ -153,9 +153,9 @@ object AccomplishmentRoute extends AbstractRoute {
                             // Get all users from user_accomplishment join with user
                             // increment score for accomplishment and user
                             val updateScore =
-                              sqlu"""UPDATE user u, accomplishment a
-                              join user_accomplishment
-                              join accomplishment on user_accomplishment.accomplishment_id = accomplishment.id
+                              sqlu"""UPDATE accomplishment a
+                              JOIN user_accomplishment ua ON ua.accomplishment_id = a.id
+                              JOIN user ON u.username = ua.username
                               SET u.score = u.score + $scoreValue, a.score = a.score + $scoreValue
                               WHERE a.id = $id"""
 
