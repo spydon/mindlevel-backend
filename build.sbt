@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
   "com.sksamuel.scrimage" %% "scrimage-core" % scrimageVersion,
   "com.sksamuel.scrimage" %% "scrimage-io-extra" % scrimageVersion,
   "com.sksamuel.scrimage" %% "scrimage-filters" % scrimageVersion,
-  "mysql" % "mysql-connector-java" % "8.0.11"
+  "mysql" % "mysql-connector-java" % "6.0.6"
 )
 
 slick := slickCodeGenTask.value
