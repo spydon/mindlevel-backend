@@ -4,7 +4,7 @@ version := "1.0"
 
 logLevel := Level.Warn
 scalaVersion := "2.12.3"
-val slickVersion = "3.2.0"
+val slickVersion = "3.2.3"
 val akkaVersion = "10.0.9"
 val scrimageVersion = "3.0.0-alpha4"
 
@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
   "com.sksamuel.scrimage" %% "scrimage-core" % scrimageVersion,
   "com.sksamuel.scrimage" %% "scrimage-io-extra" % scrimageVersion,
   "com.sksamuel.scrimage" %% "scrimage-filters" % scrimageVersion,
-  "mysql" % "mysql-connector-java" % "6.0.6"
+  "mysql" % "mysql-connector-java" % "8.0.11"
 )
 
 slick := slickCodeGenTask.value
