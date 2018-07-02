@@ -8,7 +8,7 @@ resource "aws_ecs_task_definition" "mindlevel" {
 [
   {
     "name": "mindlevel",
-    "image": "mindlevel",
+    "image": "589361660625.dkr.ecr.eu-central-1.amazonaws.com/mindlevel:latest",
     "essential": true,
     "portMappings": [
       {
@@ -16,8 +16,8 @@ resource "aws_ecs_task_definition" "mindlevel" {
         "hostPort": 8080
       }
     ],
-    "memory": 900,
-    "cpu": 2048
+    "memory": 987,
+    "cpu": 1024
   }
 ]
 DEFINITION
