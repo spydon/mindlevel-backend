@@ -80,10 +80,38 @@ resource "aws_route_table_association" "mindlevel_public_sn_rt_02_assn" {
   route_table_id = "${aws_route_table.mindlevel_public_sn_rt_02.id}"
 }
 
+## Private subnet
+resource "aws_subnet" "mindlevel_private_sn_01" {
+  vpc_id = "${aws_vpc.mindlevel_vpc.id}"
+  cidr_block = "${var.mindlevel_private_01_cidr}"
+  availability_zone = "${data.aws_availability_zones.available.names[1]}"
+  tags {
+    Name = "mindlevel_private_sn_01"
+  }
+}
+
+# Routing table for private subnet 1
+resource "aws_route_table" "mindlevel_private_sn_rt_01" {
+  vpc_id = "${aws_vpc.mindlevel_vpc.id}"
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = "${aws_internet_gateway.mindlevel_ig.id}"
+  }
+  tags {
+    Name = "mindlevel_private_sn_rt_01"
+  }
+}
+
+# Associate the routing table to public subnet 2
+resource "aws_route_table_association" "mindlevel_private_sn_rt_01_assn" {
+  subnet_id = "${aws_subnet.mindlevel_private_sn_01.id}"
+  route_table_id = "${aws_route_table.mindlevel_private_sn_rt_01.id}"
+}
+
 # Internal default VPC Security group
 
 resource "aws_security_group" "mindlevel_vpc_sg" {
-    name        = "default"
+    name        = "mindlevel_default_sg"
     description = "default VPC security group"
     vpc_id      = "${aws_vpc.mindlevel_vpc.id}"
 

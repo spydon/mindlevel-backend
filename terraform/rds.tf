@@ -1,4 +1,15 @@
+resource "aws_db_subnet_group" "rds_sn_group" {
+  name       = "rds_sn_group"
+  subnet_ids = ["${aws_subnet.mindlevel_public_sn_01.id}",
+                "${aws_subnet.mindlevel_public_sn_02.id}"]
+
+  tags {
+    Name = "DB subnet group"
+  }
+}
+
 resource "aws_db_instance" "mindlevel" {
+    depends_on                = [ "aws_vpc.mindlevel_vpc" ]
     identifier                = "mindlevel"
     allocated_storage         = 20
     storage_type              = "gp2"
@@ -13,7 +24,7 @@ resource "aws_db_instance" "mindlevel" {
     availability_zone         = "eu-central-1a"
     security_group_names      = []
     vpc_security_group_ids    = ["${aws_security_group.mindlevel_vpc_sg.id}"]
-    db_subnet_group_name      = "ecs_to_rds"
+    db_subnet_group_name      = "${aws_db_subnet_group.rds_sn_group.name}"
     parameter_group_name      = "default.mariadb10.2"
     multi_az                  = false
     backup_retention_period   = 0

@@ -1,7 +1,3 @@
-data "aws_ecs_task_definition" "mindlevel" {
-  task_definition = "${aws_ecs_task_definition.mindlevel.family}"
-}
-
 resource "aws_ecs_task_definition" "mindlevel" {
     family                = "mindlevel"
     container_definitions = <<DEFINITION
@@ -21,4 +17,9 @@ resource "aws_ecs_task_definition" "mindlevel" {
   }
 ]
 DEFINITION
+}
+
+data "aws_ecs_task_definition" "mindlevel" {
+  depends_on = [ "aws_ecs_task_definition.mindlevel" ]
+  task_definition = "${aws_ecs_task_definition.mindlevel.family}"
 }

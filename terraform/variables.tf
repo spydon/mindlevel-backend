@@ -13,7 +13,7 @@ variable "region" {
 variable "availability_zone" {
   description = "availability zone used for the demo, based on region"
   default = {
-    us-east-1 = "us-east-1"
+    eu-central-1 = "eu-central-1"
   }
 }
 
@@ -33,6 +33,10 @@ variable "mindlevel_public_01_cidr" {
 
 variable "mindlevel_public_02_cidr" {
   description = "Public 0.0 CIDR for externally accessible subnet"
+}
+
+variable "mindlevel_private_01_cidr" {
+  description = "Private subnet for RDS"
 }
 
 ########################### Autoscale Config ################################
