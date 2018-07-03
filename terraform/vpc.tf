@@ -80,6 +80,31 @@ resource "aws_route_table_association" "mindlevel_public_sn_rt_02_assn" {
   route_table_id = "${aws_route_table.mindlevel_public_sn_rt_02.id}"
 }
 
+# Internal default VPC Security group
+
+resource "aws_security_group" "mindlevel_vpc_sg" {
+    name        = "default"
+    description = "default VPC security group"
+    vpc_id      = "${aws_vpc.mindlevel_vpc.id}"
+
+    ingress {
+        from_port       = 0
+        to_port         = 0
+        protocol        = "-1"
+        security_groups = []
+        self            = true
+    }
+
+
+    egress {
+        from_port       = 0
+        to_port         = 0
+        protocol        = "-1"
+        cidr_blocks     = ["0.0.0.0/0"]
+    }
+
+}
+
 # ECS Instance Security group
 resource "aws_security_group" "mindlevel_public_sg" {
   name = "mindlevel_public_sg"

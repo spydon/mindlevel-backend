@@ -10,7 +10,8 @@ resource "aws_launch_configuration" "ecs-launch-configuration" {
       delete_on_termination = true
     }
 
-    security_groups             = ["${aws_security_group.mindlevel_public_sg.id}"]
+    security_groups             = ["${aws_security_group.mindlevel_public_sg.id}",
+                                   "${aws_security_group.mindlevel_vpc_sg.id}"]
     associate_public_ip_address = "true"
     key_name                    = "${var.ecs_key_pair_name}"
     user_data                   = <<EOF
