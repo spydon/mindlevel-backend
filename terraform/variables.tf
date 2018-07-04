@@ -17,6 +17,11 @@ variable "availability_zone" {
   }
 }
 
+# Used to be able to share zone between terraform setups
+variable "hosted_zone_id" {
+  default = "Z31YY064WFVPVT"
+}
+
 ########################### MindLevel VPC Config ################################
 
 variable "mindlevel_vpc" {

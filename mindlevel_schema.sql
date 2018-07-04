@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`challenge` (
   `title` VARCHAR(191) NOT NULL,
   `description` VARCHAR(1024) NOT NULL,
   `image` VARCHAR(191) NOT NULL,
-  `created` BIGINT NOT NULL,
+  `created` BIGINT NOT NULL DEFAULT 0,
   `creator` VARCHAR(191) NOT NULL,
   `validated` TINYINT(1) NOT NULL,
   PRIMARY KEY (`id`),
