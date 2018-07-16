@@ -34,6 +34,6 @@ echo "Successfully pushed container image to AWS" &&
 aws ecs list-tasks --cluster mindlevel | \
 sed '/\([{}].*\|.*taskArns.*\| *]\)/d' | sed 's/ *"\([^"]*\).*/\1/' | \
 while read -r task; do aws ecs stop-task --cluster mindlevel --task $task; done > /dev/null &&
-aws ecs run-task --cluster mindlevel --task-definition mindlevel:5 --count 1 > /dev/null &&
+aws ecs run-task --cluster mindlevel --task-definition mindlevel --count 1 > /dev/null &&
 rm -rf ./mindlevel-backend &&
 echo "Successfully restarted the ECS task" || echo "Something failed"
