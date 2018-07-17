@@ -25,7 +25,7 @@ resource "aws_db_instance" "mindlevel" {
     security_group_names      = []
     vpc_security_group_ids    = ["${aws_security_group.mindlevel_vpc_sg.id}"]
     db_subnet_group_name      = "${aws_db_subnet_group.rds_sn_group.name}"
-    parameter_group_name      = "default.mariadb10.2"
+    parameter_group_name      = "${aws_db_parameter_group.mindlevel-mariadb.name}"
     multi_az                  = false
     backup_retention_period   = 0
     backup_window             = "20:16-20:46"
