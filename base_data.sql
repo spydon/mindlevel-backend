@@ -130,3 +130,15 @@ VALUES (
 "Find someone that speaks a language that you don't know and ask them to teach you some basics.",
 "20_communication.jpg", "Community", True);
 
+INSERT INTO challenge (title, description, image, creator, validated)
+VALUES (
+"Creatively Nice",
+"This is an extremely wide challenge. Say something nice to somebody, but in a creative way.",
+"21_creatively_nice.jpg", "Community", True);
+
+INSERT INTO challenge (title, description, image, creator, validated)
+VALUES (
+"Mall Freak",
+"Bring a friend to the mall and then tell them an excuse to get away from them. Then go to the information desk and say that you have lost a kid and get them to call out your friends name.",
+"22_mall.jpg", "Community", True);
+
