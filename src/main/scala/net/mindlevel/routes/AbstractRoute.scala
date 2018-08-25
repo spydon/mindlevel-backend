@@ -52,6 +52,10 @@ trait AbstractRoute {
       contributors: List[String]
   )
 
+  protected case class Count(
+      count: Int
+  )
+
   protected implicit val accomplishmentFormat = jsonFormat7(AccomplishmentRow)
   protected implicit val challengeFormat = jsonFormat7(ChallengeRow)
   protected implicit val categoryFormat = jsonFormat3(CategoryRow)
@@ -61,6 +65,7 @@ trait AbstractRoute {
   protected implicit val loginFormat = jsonFormat4(LoginFormat) // TODO: Refactor this
   protected implicit val likeResponseFormat = jsonFormat2(LikeResponse)
   protected implicit val contributorsFormat = jsonFormat1(Contributors)
+  protected implicit val countFormat = jsonFormat1(Count)
 
   protected case class AuthException(msg: String) extends IllegalAccessException(msg)
 

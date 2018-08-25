@@ -21,6 +21,7 @@ import slick.model.Table
 
 import scala.collection.mutable
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
@@ -54,6 +55,12 @@ object UserRoute extends AbstractRoute {
           get {
             val usernames = db.run(User.map(_.username).result)
             onSuccess(usernames)(complete(_))
+          }
+        } ~
+        path("count") {
+          get {
+            val count = db.run(User.size.result)
+            onSuccess(count.map(Count))(complete(_))
           }
         } ~
         pathPrefix("highscore") {
