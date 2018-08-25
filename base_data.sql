@@ -142,3 +142,39 @@ VALUES (
 "Bring a friend to the mall and then tell them an excuse to get away from them. Then go to the information desk and say that you have lost a kid and get them to call out your friends name.",
 "22_mall.jpg", "Community", True);
 
+INSERT INTO category (name, image)
+VALUES
+("Simple", "category_simple.jpg");
+
+INSERT INTO category (name, image)
+VALUES
+("Medium", "category_medium.jpg");
+
+INSERT INTO category (name, image)
+VALUES
+("Hard", "category_hard.jpg");
+
+INSERT INTO challenge_category (challenge_id, category_id)
+VALUES
+(1, 1),
+(2, 2),
+(3, 2),
+(4, 1),
+(5, 1),
+(6, 3),
+(7, 3),
+(8, 3),
+(9, 2),
+(10, 2),
+(11, 2),
+(12, 1),
+(13, 1),
+(14, 3),
+(15, 2),
+(16, 3),
+(17, 2),
+(18, 1),
+(19, 2),
+(20, 2),
+(21, 1),
+(22, 2);

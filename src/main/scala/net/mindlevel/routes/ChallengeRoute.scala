@@ -19,116 +19,131 @@ object ChallengeRoute extends AbstractRoute {
         get {
           complete(db.run(Challenge.result))
         } ~
-          post {
-            entity(as[ChallengeRow]) { challenge =>
-              val nonValidatedChallenge = challenge.copy(validated = false)
-              val maybeInserted = db.run(Challenge += nonValidatedChallenge)
-              onSuccess(maybeInserted) {
-                case 1 => complete(StatusCodes.OK)
-                case _ => complete(StatusCodes.BadRequest)
-              }
+        post {
+          entity(as[ChallengeRow]) { challenge =>
+            val nonValidatedChallenge = challenge.copy(validated = false)
+            val maybeInserted = db.run(Challenge += nonValidatedChallenge)
+            onSuccess(maybeInserted) {
+              case 1 => complete(StatusCodes.OK)
+              case _ => complete(StatusCodes.BadRequest)
             }
           }
-      }  ~
-        pathPrefix("latest") {
-          pathEndOrSingleSlash {
-            get {
-              val challenges = db.run(Challenge.sortBy(_.created.desc).take(challengePageSize).result)
-              complete(challenges)
-            }
-          } ~
-            path(IntNumber) { pageSize =>
-              get {
-                val challenges = db.run(Challenge.sortBy(_.created.desc).take(pageSize).result)
-                complete(challenges)
-              }
-            } ~
-            path(Segment) { range =>
-              get {
-                if (range.contains("-")) {
-                  val between = range.split("-")
-                  val drop = between(0).toInt - 1
-                  val upper = between(1).toInt
-                  val take = upper - drop
-                  if (drop < upper) {
-                    val challenges = db.run(Challenge.sortBy(_.created.desc).drop(drop).take(take).result)
-                    complete(challenges)
-                  } else {
-                    complete(StatusCodes.BadRequest)
-                  }
-                } else {
-                  complete(StatusCodes.BadRequest)
-                }
-              }
-            }
+        }
+      } ~
+      pathPrefix("latest") {
+        pathEndOrSingleSlash {
+          get {
+            val challenges = db.run(Challenge.sortBy(_.created.desc).take(challengePageSize).result)
+            complete(challenges)
+          }
         } ~
-        pathPrefix(IntNumber) { id =>
-          pathEndOrSingleSlash {
-            get {
-              val maybeChallenge = db.run(Challenge.filter(_.id === id).result.headOption)
-
-              onSuccess(maybeChallenge) {
-                case Some(challenge) => complete(challenge)
-                case None => complete(StatusCodes.NotFound)
-              }
-            }
-          } ~
-            path("image") {
-              post {
-                headerValueByName("X-Session") { session =>
-                  onSuccess(isAuthorizedToChallenge(id, session)) {
-                    case true =>
-                      extractRequestContext { ctx =>
-                        implicit val materializer = ctx.materializer
-                        implicit val ec = ctx.executionContext
-                        fileUpload("image") {
-                          case (fileInfo, fileStream) =>
-                            val filename = fileInfo.fileName // TODO: Hash later
-                            val sink = FileIO.toPath(Paths.get("/tmp") resolve filename)
-                            val writeResult = fileStream.runWith(sink)
-                            onSuccess(writeResult) { result =>
-                              result.status match {
-                                case Success(_) =>
-                                  val q = for {m <- Challenge if m.id === id} yield m.image
-                                  db.run(q.update(filename)) // Fire and forget
-                                  complete(s"Successfully written ${result.count} bytes")
-                                case Failure(e) =>
-                                  throw e
-                              }
-                            }
-                        }
-                      }
-                    case false =>
-                      complete(StatusCodes.Unauthorized)
-                  }
-                }
-              }
-            } ~
-            path("accomplishment") {
-              get {
-                complete(db.run(Accomplishment.filter(_.challengeId === id).result))
-              }
-            }
+        path(IntNumber) { pageSize =>
+          get {
+            val challenges = db.run(Challenge.sortBy(_.created.desc).take(pageSize).result)
+            complete(challenges)
+          }
         } ~
         path(Segment) { range =>
           get {
             if (range.contains("-")) {
               val between = range.split("-")
-              val lower = between(0).toInt
+              val drop = between(0).toInt - 1
               val upper = between(1).toInt
-              val challenges = db.run(Challenge.filter(_.id >= lower).filter(_.id <= upper).result)
-              complete(challenges)
-            } else if (range.contains(",")) {
-              val ids = range.split(",").map(_.toInt)
-              val query = for {
-                m <- Challenge if m.id inSetBind ids
-              } yield m
-              val challenges = db.run(query.result)
-              complete(challenges)
+              val take = upper - drop
+              if (drop < upper) {
+                val challenges = db.run(Challenge.sortBy(_.created.desc).drop(drop).take(take).result)
+                complete(challenges)
+              } else {
+                complete(StatusCodes.BadRequest)
+              }
             } else {
               complete(StatusCodes.BadRequest)
             }
           }
         }
+      } ~
+      pathPrefix("category") {
+        pathEndOrSingleSlash {
+          get {
+            complete(db.run(Category.result))
+          }
+        } ~
+        path(IntNumber) { categoryId =>
+          get {
+            val challenges = db.run(ChallengeCategory.filter(_.categoryId === categoryId).flatMap( cc =>
+              Challenge.filter(_.id === cc.challengeId)
+            ).result)
+            complete(challenges)
+          }
+        }
+      } ~
+      pathPrefix(IntNumber) { id =>
+        pathEndOrSingleSlash {
+          get {
+            val maybeChallenge = db.run(Challenge.filter(_.id === id).result.headOption)
+
+            onSuccess(maybeChallenge) {
+              case Some(challenge) => complete(challenge)
+              case None => complete(StatusCodes.NotFound)
+            }
+          }
+        } ~
+        path("image") {
+          post {
+            headerValueByName("X-Session") { session =>
+              onSuccess(isAuthorizedToChallenge(id, session)) {
+                case true =>
+                  extractRequestContext { ctx =>
+                    implicit val materializer = ctx.materializer
+                    implicit val ec = ctx.executionContext
+                    fileUpload("image") {
+                      case (fileInfo, fileStream) =>
+                        val filename = fileInfo.fileName // TODO: Hash later
+                        val sink = FileIO.toPath(Paths.get("/tmp") resolve filename)
+                        val writeResult = fileStream.runWith(sink)
+                        onSuccess(writeResult) { result =>
+                          result.status match {
+                            case Success(_) =>
+                              val q = for {m <- Challenge if m.id === id} yield m.image
+                              db.run(q.update(filename)) // Fire and forget
+                              complete(s"Successfully written ${result.count} bytes")
+                            case Failure(e) =>
+                              throw e
+                          }
+                        }
+                    }
+                  }
+                case false =>
+                  complete(StatusCodes.Unauthorized)
+              }
+            }
+          }
+        } ~
+        path("accomplishment") {
+          get {
+            complete(db.run(Accomplishment.filter(_.challengeId === id).result))
+          }
+        }
+      } ~
+      path(Segment) { range =>
+        get {
+          if (range.contains("-")) {
+            val between = range.split("-")
+            val lower = between(0).toInt
+            val upper = between(1).toInt
+            val challenges = db.run(Challenge.filter(_.id >= lower).filter(_.id <= upper).result)
+            complete(challenges)
+          } else if (range.contains(",")) {
+            val ids = range.split(",").map(_.toInt)
+            val query = for {
+              m <- Challenge if m.id inSetBind ids
+            } yield m
+            val challenges = db.run(query.result)
+            complete(challenges)
+          } else {
+            complete(StatusCodes.BadRequest)
+          }
+        }
+      }
     }
 }

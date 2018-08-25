@@ -93,6 +93,40 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
+-- Table `mindlevel`.`category`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `mindlevel`.`category` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(191) NOT NULL,
+  `image` VARCHAR(191) NOT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mindlevel`.`challenge_category`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `mindlevel`.`challenge_category` (
+  `challenge_id` INT NOT NULL,
+  `category_id` INT NOT NULL,
+  PRIMARY KEY (`challenge_id`, `category_id`),
+  INDEX `fk_challenge_category_idx` (`category_id` ASC),
+  CONSTRAINT `fk_challenge_category_1`
+    FOREIGN KEY (`challenge_id`)
+    REFERENCES `mindlevel`.`challenge` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_challenge_category_2`
+    FOREIGN KEY (`category_id`)
+    REFERENCES `mindlevel`.`category` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table `mindlevel`.`accomplishment`
 -- -----------------------------------------------------
 

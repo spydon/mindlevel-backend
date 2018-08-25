@@ -54,6 +54,7 @@ trait AbstractRoute {
 
   protected implicit val accomplishmentFormat = jsonFormat7(AccomplishmentRow)
   protected implicit val challengeFormat = jsonFormat7(ChallengeRow)
+  protected implicit val categoryFormat = jsonFormat3(CategoryRow)
   protected implicit val userFormat = jsonFormat6(UserRow)
   protected implicit val userExtraFormat = jsonFormat3(UserExtraRow)
   protected implicit val userAccomplishmentFormat = jsonFormat2(UserAccomplishmentRow)
