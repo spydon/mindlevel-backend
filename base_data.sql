@@ -142,6 +142,12 @@ VALUES (
 "Bring a friend to the mall and then tell them an excuse to get away from them. Then go to the information desk and say that you have lost a kid and get them to call out your friends name.",
 "22_mall.jpg", "Community", True);
 
+INSERT INTO challenge (title, description, image, creator, validated)
+VALUES (
+"Catographer",
+"Go outside and find a cat, try to get that cat to strike a pose that you can photograph. Harder than it sounds!",
+"23_catographer.jpg", "Community", True);
+
 INSERT INTO category (name, image)
 VALUES
 ("Simple", "category_simple.jpg");
@@ -177,4 +183,5 @@ VALUES
 (19, 2),
 (20, 2),
 (21, 1),
-(22, 2);
+(22, 2),
+(23, 2);
