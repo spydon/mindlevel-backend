@@ -52,18 +52,15 @@ object UserRoute extends AbstractRoute {
           }
       } ~
         path("usernames") {
+          // Deprecated, old versions still rely on this, use stats route instead
           get {
+            pathPrefix("highscore") {
             val usernames = db.run(User.map(_.username).result)
             onSuccess(usernames)(complete(_))
           }
         } ~
-        path("count") {
-          get {
-            val count = db.run(User.size.result)
-            onSuccess(count.map(Count))(complete(_))
-          }
-        } ~
         pathPrefix("highscore") {
+          // Deprecated, old versions still rely on this, use stats route instead
           path(IntNumber) { amount =>
             get {
               val users = db.run(User.sortBy(_.score.desc).take(amount).result)
