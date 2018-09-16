@@ -55,8 +55,9 @@ object UserRoute extends AbstractRoute {
           // Deprecated, old versions still rely on this, use stats route instead
           get {
             pathPrefix("highscore") {
-            val usernames = db.run(User.map(_.username).result)
-            onSuccess(usernames)(complete(_))
+              val usernames = db.run(User.map(_.username).result)
+              onSuccess(usernames)(complete(_))
+            }
           }
         } ~
         pathPrefix("highscore") {
