@@ -6,6 +6,7 @@ import java.util.UUID
 
 import akka.http.scaladsl.server.Route
 import com.github.t3hnar.bcrypt._
+import com.typesafe.config.ConfigFactory
 import net.mindlevel.models.Tables._
 import slick.jdbc.MySQLProfile.api._
 import spray.json.DefaultJsonProtocol._
@@ -15,12 +16,26 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 private object DBSingleton {
-  val db = Database.forConfig("db")
+  val default = Database.forConfig("db.default")
+  val custom = Database.forConfig("db.custom")
+  val dbs = Map("default" -> default, "custom" -> custom)
+
+  def db(name: String): Database = dbs(name)
 }
 
 trait AbstractRoute {
   def route: Route
-  protected val db = DBSingleton.db
+  private var integration: String = "default"
+  private val conf = ConfigFactory.load()
+
+  def setIntegration(integration: Option[String]) = {
+    this.integration = integration.getOrElse(conf.getString("db.defaultDb"))
+  }
+
+  protected def db: Database = {
+    DBSingleton.db(integration)
+  }
+
   protected val accomplishmentPageSize = 20
   protected val challengePageSize = 20
 
@@ -40,7 +55,8 @@ trait AbstractRoute {
       username: String,
       password: Option[String] = None,
       newPassword: Option[String] = None,
-      session: Option[String] = None
+      session: Option[String] = None,
+      customDb: Option[String] = None
   )
 
   protected case class LikeResponse(
@@ -62,10 +78,11 @@ trait AbstractRoute {
   protected implicit val userFormat = jsonFormat6(UserRow)
   protected implicit val userExtraFormat = jsonFormat3(UserExtraRow)
   protected implicit val userAccomplishmentFormat = jsonFormat2(UserAccomplishmentRow)
-  protected implicit val loginFormat = jsonFormat4(LoginFormat) // TODO: Refactor this
+  protected implicit val loginFormat = jsonFormat5(LoginFormat) // TODO: Refactor this
   protected implicit val likeResponseFormat = jsonFormat2(LikeResponse)
   protected implicit val contributorsFormat = jsonFormat1(Contributors)
   protected implicit val countFormat = jsonFormat1(Count)
+  protected implicit val customDbFormat = jsonFormat3(CustomDbRow)
 
   protected case class AuthException(msg: String) extends IllegalAccessException(msg)
 
@@ -184,7 +201,7 @@ trait AbstractRoute {
     }
   }
 
-  protected def customDbExists(customDb: String): Future[Boolean] = {
-    db.run(CustomDb.filter(_.name == customDb).exists.result)
+  protected def customDbExists(pass: String): Future[Boolean] = {
+    db.run(CustomDb.filter(_.pass === pass).exists.result)
   }
 }
