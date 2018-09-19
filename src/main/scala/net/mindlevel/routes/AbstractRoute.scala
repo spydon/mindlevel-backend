@@ -74,30 +74,16 @@ trait AbstractRoute {
   }
 
   protected def isAuthorized(username: String, session: String): Future[Boolean] = {
-    val maybeUser = db.run {
-      Session
-        .filter(s => s.username === username && s.session === session)
-        .result.headOption
-    }
-    maybeUser.map {
-      case Some(_) => true
-      case None => false
-    }
+    db.run(Session.filter(s => s.username === username && s.session === session).exists.result)
   }
 
   protected def isAuthorizedToAccomplishment(accomplishmentId: Int, session: String): Future[Boolean] = {
     val maybeUsername = nameFromSession(session)
     maybeUsername.flatMap {
       case Some(username) =>
-        val isAuthorized =
-          db.run(UserAccomplishment
-            .filter(_.username === username)
-            .filter(_.accomplishmentId === accomplishmentId).result.headOption)
-        isAuthorized.map {
-          case Some(_) => true
-          case None => false
-        }
-
+        db.run(UserAccomplishment
+          .filter(_.username === username)
+          .filter(_.accomplishmentId === accomplishmentId).exists.result)
       case None =>
         Future(false)
     }
@@ -107,15 +93,9 @@ trait AbstractRoute {
     val maybeUser = nameFromSession(session)
     maybeUser.flatMap {
       case Some(username) =>
-        val isAuthorized =
           db.run(Challenge
             .filter(_.id === challengeId)
-            .filter(_.creator === username).result.headOption)
-        isAuthorized.map {
-          case Some(_) => true
-          case None => false
-        }
-
+            .filter(_.creator === username).exists.result)
       case None =>
         Future(false)
     }
@@ -202,5 +182,9 @@ trait AbstractRoute {
       case None =>
         throw AuthException("Could not update the session")
     }
+  }
+
+  protected def customDbExists(customDb: String): Future[Boolean] = {
+    db.run(CustomDb.filter(_.name == customDb).exists.result)
   }
 }

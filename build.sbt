@@ -31,6 +31,7 @@ sourceGenerators in Compile += slickCodeGenTask
 
 lazy val slick = TaskKey[Seq[File]]("gen-tables")
 // Don't forget to add the src_managed folder in intellij if net.mindlevel.models is not found
+// Also remember to run sbt compile for this task to run, intellij doesn't always decide to run it
 lazy val slickCodeGenTask = Def.task {
   val dir = sourceManaged.value
   val cp = (dependencyClasspath in Compile).value

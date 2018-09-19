@@ -193,6 +193,18 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`accomplishment_like` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
+
+-- -----------------------------------------------------
+-- Table `mindlevel`.`custom_db`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `mindlevel`.`custom_db` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(191) NOT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
