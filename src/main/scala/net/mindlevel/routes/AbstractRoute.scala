@@ -20,7 +20,7 @@ private object DBSingleton {
   val custom = Database.forConfig("db.custom")
   val dbs = Map("default" -> default, "custom" -> custom)
 
-  def db(name: String): Database = dbs(name)
+  def db(name: String): Database = dbs.getOrElse(name, default)
 }
 
 trait AbstractRoute {

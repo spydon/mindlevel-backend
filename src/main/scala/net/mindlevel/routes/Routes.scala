@@ -9,7 +9,7 @@ object Routes {
                            PingRoute, UserRoute, StatsRoute, CustomRoute)
 
   object AllRoutes extends AbstractRoute {
-    def route: Route =
+    val route: Route =
       cors() {
         optionalHeaderValueByName("X-Integration") { integration =>
           routes.map( route => {
