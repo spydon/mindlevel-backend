@@ -21,7 +21,8 @@ rm -rf ./mindlevel-backend &&
 git clone -b release git@github.com:spydon/mindlevel-backend.git > /dev/null &&
 echo "Cloned the release branch of the project" &&
 cd mindlevel-backend &&
-mysql -uroot -ppassword mindlevel < mindlevel_schema.sql &&
+mysql -uroot -ppassword mindlevel < database/mindlevel_schema.sql &&
+mysql -uroot -ppassword mindlevel < database/custom_schema.sql &&
 echo "Setup the local database to build Slick structures from" &&
 sbt assembly > /dev/null &&
 echo "Built a fat jar" &&
