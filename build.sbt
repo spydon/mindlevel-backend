@@ -25,11 +25,13 @@ libraryDependencies ++= Seq(
   "mysql" % "mysql-connector-java" % "6.0.6"
 )
 
-slick := slickCodeGenTask.value
+// Uncomment the follow lines to do code generation of the slick structures
+// and don't forget to do %s/Some("mindlevel")/None/g in Tables.scala
 
-sourceGenerators in Compile += slickCodeGenTask
+//slick := slickCodeGenTask.value
+//sourceGenerators in Compile += slickCodeGenTask
+//lazy val slick = TaskKey[Seq[File]]("gen-tables")
 
-lazy val slick = TaskKey[Seq[File]]("gen-tables")
 // Don't forget to add the src_managed folder in intellij if net.mindlevel.models is not found
 // Also remember to run sbt compile for this task to run, intellij doesn't always decide to run it
 lazy val slickCodeGenTask = Def.task {
