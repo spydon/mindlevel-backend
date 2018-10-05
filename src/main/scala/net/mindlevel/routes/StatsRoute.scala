@@ -24,19 +24,41 @@ object StatsRoute extends AbstractRoute {
           onSuccess(usernames)(complete(_))
         }
       } ~
-      path("user") {
-        get {
-          onSuccess(count[User](User))(complete(_))
+      pathPrefix("count") {
+        path("user") {
+          get {
+            onSuccess(count[User](User))(complete(_))
+          }
+        } ~
+        path("accomplishment") {
+          get {
+            onSuccess(count[Accomplishment](Accomplishment))(complete(_))
+          }
+        } ~
+        path("challenge") {
+          get {
+            onSuccess(count[Challenge](Challenge))(complete(_))
+          }
         }
       } ~
-      path("accomplishment") {
-        get {
-          onSuccess(count[Accomplishment](Accomplishment))(complete(_))
-        }
-      } ~
-      path("challenge") {
-        get {
-          onSuccess(count[Challenge](Challenge))(complete(_))
+      pathPrefix("latest") {
+        path("user") {
+          get {
+            val user = db.run(User.sortBy(_.created.desc).take(1).result)
+            onSuccess(user)(complete(_))
+          }
+        } ~
+        path("accomplishment") {
+          get {
+            val accomplishment = db.run(Accomplishment.sortBy(_.created.desc).take(1).result)
+            onSuccess(accomplishment)(complete(_))
+          }
+        } ~
+        path("challenge") {
+          get {
+            val challenge = db.run(Challenge.sortBy(_.created.desc).take(1).result)
+            onSuccess(challenge)(complete(_))
+          }
         }
       } ~
       pathPrefix("highscore") {
