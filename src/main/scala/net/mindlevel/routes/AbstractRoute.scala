@@ -72,10 +72,10 @@ trait AbstractRoute {
       count: Int
   )
 
-  protected implicit val accomplishmentFormat = jsonFormat7(AccomplishmentRow)
-  protected implicit val challengeFormat = jsonFormat7(ChallengeRow)
+  protected implicit val accomplishmentFormat = jsonFormat9(AccomplishmentRow)
+  protected implicit val challengeFormat = jsonFormat9(ChallengeRow)
   protected implicit val categoryFormat = jsonFormat3(CategoryRow)
-  protected implicit val userFormat = jsonFormat6(UserRow)
+  protected implicit val userFormat = jsonFormat7(UserRow)
   protected implicit val userExtraFormat = jsonFormat3(UserExtraRow)
   protected implicit val userAccomplishmentFormat = jsonFormat2(UserAccomplishmentRow)
   protected implicit val loginFormat = jsonFormat5(LoginFormat) // TODO: Refactor this
@@ -88,6 +88,14 @@ trait AbstractRoute {
 
   protected def nameFromSession(session: String): Future[Option[String]] = {
     db.run(Session.filter(_.session === session).map(_.username).result.headOption)
+  }
+
+  protected def userFromSession(session: String): Future[UserRow] = {
+    val query = for {
+      s <- Session if s.session === session
+      u <- User if u.username === s.username
+    } yield u
+    db.run(query.result.head)
   }
 
   protected def isAuthorized(username: String, session: String): Future[Boolean] = {

@@ -14,21 +14,36 @@ import net.mindlevel.models.Tables._
 import slick.jdbc.MySQLProfile.api._
 import spray.json.DefaultJsonProtocol._
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Success
 
 object AccomplishmentRoute extends AbstractRoute {
 
+  private type AccomplishmentQuery = Query[Accomplishment, Accomplishment#TableElementType, Seq]
+
+  def removeRestricted(session: String)(accomplishments: AccomplishmentQuery):
+  Future[Seq[Accomplishment#TableElementType]] = {
+    userFromSession(session).map { user =>
+      accomplishments.filter(_.scoreRestriction <= user.score).filter(_.accomplishmentRestriction <= user.level)
+    }.flatMap(q => db.run(q.result))
+  }
+
   def route: Route =
     pathPrefix("accomplishment") {
-      pathEndOrSingleSlash {
-        post {
-          extractRequestContext { ctx =>
-            implicit val materializer = ctx.materializer
-            implicit val ec = ctx.executionContext
-            entity(as[Multipart.FormData]) { formData =>
-              headerValueByName("X-Session") { session =>
+      headerValueByName("X-Session") { session =>
+        def clean = removeRestricted(session)(_)
+
+        def cleanHead(query: AccomplishmentQuery) =
+          removeRestricted(session)(query).map(_.headOption)
+
+        pathEndOrSingleSlash {
+          post {
+            extractRequestContext { ctx =>
+              implicit val materializer = ctx.materializer
+              implicit val ec = ctx.executionContext
+              entity(as[Multipart.FormData]) { formData =>
                 onSuccess(nameFromSession(session)) {
                   case Some(username) =>
                     // collect all parts of the multipart as it arrives into a map
@@ -77,53 +92,48 @@ object AccomplishmentRoute extends AbstractRoute {
               }
             }
           }
-        }
-      } ~
-        pathPrefix("latest") {
-          pathEndOrSingleSlash {
-            get {
-              val accomplishments = db.run(Accomplishment.sortBy(_.created.desc).take(accomplishmentPageSize).result)
-              complete(accomplishments)
-            }
-          } ~
-            path(IntNumber) { pageSize =>
+        } ~
+          pathPrefix("latest") {
+            pathEndOrSingleSlash {
               get {
-                val accomplishments = db.run(Accomplishment.sortBy(_.created.desc).take(pageSize).result)
+                val accomplishments = clean(Accomplishment.sortBy(_.created.desc).take(accomplishmentPageSize))
                 complete(accomplishments)
               }
             } ~
-            path(Segment) { range =>
-              get {
-                if (range.contains("-")) {
-                  val between = range.split("-")
-                  val drop = between(0).toInt - 1
-                  val upper = between(1).toInt
-                  val take = upper - drop
-                  if (drop < upper) {
-                    val accomplishments = db.run(Accomplishment.sortBy(_.created.desc).drop(drop).take(take).result)
-                    complete(accomplishments)
+              path(IntNumber) { pageSize =>
+                get {
+                  val accomplishments = clean(Accomplishment.sortBy(_.created.desc).take(pageSize))
+                  complete(accomplishments)
+                }
+              } ~
+              path(Segment) { range =>
+                get {
+                  if (range.contains("-")) {
+                    val between = range.split("-")
+                    val drop = between(0).toInt - 1
+                    val upper = between(1).toInt
+                    val take = upper - drop
+                    if (drop < upper) {
+                      val accomplishments = clean(Accomplishment.sortBy(_.created.desc).drop(drop).take(take))
+                      complete(accomplishments)
+                    } else {
+                      complete(StatusCodes.BadRequest)
+                    }
                   } else {
                     complete(StatusCodes.BadRequest)
                   }
-                } else {
-                  complete(StatusCodes.BadRequest)
                 }
               }
-            }
-        } ~
-        pathPrefix(IntNumber) { id =>
-          val maybeAccomplishment = db.run(Accomplishment.filter(_.id === id).result.headOption)
-          pathEndOrSingleSlash {
-            get {
-              onSuccess(maybeAccomplishment) {
-                case Some(accomplishment) => complete(accomplishment)
-                case None => complete(StatusCodes.NotFound)
-              }
-            }
           } ~
-            path("like") {
+          pathPrefix(IntNumber) { id =>
+            val maybeAccomplishment = cleanHead(Accomplishment.filter(_.id === id))
+            pathEndOrSingleSlash {
               get {
-                headerValueByName("X-Session") { session =>
+                complete(maybeAccomplishment)
+              }
+            } ~
+              path("like") {
+                get {
                   onSuccess(nameFromSession(session)) {
                     case None =>
                       complete(StatusCodes.Unauthorized)
@@ -142,8 +152,9 @@ object AccomplishmentRoute extends AbstractRoute {
 
                         def scoreResponse(first: Boolean) = {
                           val maybeLikes = db.run(Accomplishment.filter(_.id === id).result.headOption)
-                          onSuccess(maybeLikes) { likes =>
-                            complete(LikeResponse(first, likes.get.score.toString))
+                          onSuccess(maybeLikes) {
+                            case Some(likes) => complete(LikeResponse(first, likes.score.toString))
+                            case None => complete(StatusCodes.NotFound)
                           }
                         }
 
@@ -167,65 +178,54 @@ object AccomplishmentRoute extends AbstractRoute {
                       }
                   }
                 }
-              }
-        } ~
-            path("contributor") {
-              get {
-                onSuccess(maybeAccomplishment) {
-                  case Some(accomplishment) =>
-                    val innerJoin = for {
-                      (_, u) <-
-                        UserAccomplishment.filter(_.accomplishmentId === id) join User on (_.username === _.username)
-                    } yield u
-
-                    onSuccess(db.run(innerJoin.result)) { users =>
-                      complete(users)
-                    }
-                  case None =>
-                    complete(StatusCodes.NotFound)
-                }
               } ~
-                post {
-                  entity(as[Seq[String]]) { usernames =>
-                    onSuccess(maybeAccomplishment) {
-                      case Some(_) =>
-                        headerValueByName("X-Session") { session =>
-                          onSuccess(isAuthorizedToAccomplishment(id, session)) {
-                            case true =>
-                              val userAccomplishmentRows = usernames.toSet[String].map(UserAccomplishmentRow(_, id))
-                              val maybeInserted = db.run(UserAccomplishment ++= userAccomplishmentRows)
-                              onSuccess(maybeInserted) {
-                                case Some(_) => complete(StatusCodes.OK)
-                                case None => complete(StatusCodes.BadRequest)
-                              }
-                            case false => complete(StatusCodes.Unauthorized)
+              path("contributor") {
+                get {
+                  val innerJoin = for {
+                    (_, u) <-
+                    UserAccomplishment.filter(_.accomplishmentId === id) join User on (_.username === _.username)
+                  } yield u
+
+                  onSuccess(db.run(innerJoin.result)) { users =>
+                    complete(users)
+                  }
+                } ~
+                  post {
+                    entity(as[Seq[String]]) { usernames =>
+                      onSuccess(isAuthorizedToAccomplishment(id, session)) {
+                        case true =>
+                          val userAccomplishmentRows = usernames.toSet[String].map(UserAccomplishmentRow(_, id))
+                          val maybeInserted = db.run(UserAccomplishment ++= userAccomplishmentRows)
+                          onSuccess(maybeInserted) {
+                            case Some(_) => complete(StatusCodes.OK)
+                            case None => complete(StatusCodes.BadRequest)
                           }
-                        }
-                      case None => complete(StatusCodes.NotFound)
+                        case false => complete(StatusCodes.Unauthorized)
+                      }
                     }
                   }
-                }
-            }
-        } ~
-        path(Segment) { range =>
-          get {
-            if (range.contains("-")) {
-              val between = range.split("-")
-              val lower = between(0).toInt
-              val upper = between(1).toInt
-              val accomplishments = db.run(Accomplishment.filter(_.id >= lower).filter(_.id <= upper).result)
-              complete(accomplishments)
-            } else if (range.contains(",")) {
-              val ids = range.split(",").map(_.toInt)
-              val query = for {
-                m <- Accomplishment if m.id inSetBind ids
-              } yield m
-              val accomplishments = db.run(query.result)
-              complete(accomplishments)
-            } else {
-              complete(StatusCodes.BadRequest)
+              }
+          } ~
+          path(Segment) { range =>
+            get {
+              if (range.contains("-")) {
+                val between = range.split("-")
+                val lower = between(0).toInt
+                val upper = between(1).toInt
+                val accomplishments = clean(Accomplishment.filter(_.id >= lower).filter(_.id <= upper))
+                complete(accomplishments)
+              } else if (range.contains(",")) {
+                val ids = range.split(",").map(_.toInt)
+                val query = for {
+                  m <- Accomplishment if m.id inSetBind ids
+                } yield m
+                val accomplishments = clean(query)
+                complete(accomplishments)
+              } else {
+                complete(StatusCodes.BadRequest)
+              }
             }
           }
-        }
+      }
     }
 }

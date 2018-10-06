@@ -10,4 +10,4 @@ To run as a container check the [Container Readme](container/readme.txt)
 
 ## Hacks
 Since the table generation isn't flawless and we need to support multiple databases from the same table classes you have
-to run this after the generation `%s/Some("mindlevel")/None`.
+to run this after the generation `%s/Some("mindlevel")/None/g`.

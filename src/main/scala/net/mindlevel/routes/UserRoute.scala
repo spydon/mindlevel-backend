@@ -38,7 +38,7 @@ object UserRoute extends AbstractRoute {
             entity(as[LoginFormat]) { login =>
               val actions = mutable.ArrayBuffer[DBIOAction[Int, NoStream, Write with Transactional]]()
               val userExtra = UserExtraRow(username = login.username, password = login.password.get.bcrypt, email = "")
-              val processedUser = UserRow(username = login.username, score = 0, created = now)
+              val processedUser = UserRow(username = login.username, score = 0, level = 0, created = now)
               val emptySession = SessionRow(username = login.username, session = null)
 
               actions += (User += processedUser)
