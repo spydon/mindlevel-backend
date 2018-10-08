@@ -1,5 +1,8 @@
 package net.mindlevel.routes
 
+import java.sql.Timestamp
+import java.time.{LocalDateTime, ZoneId, ZoneOffset}
+
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -12,6 +15,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 object StatsRoute extends AbstractRoute {
+
   def count[T <: AbstractTable[_]](table: TableQuery[T]): Future[Count] = {
     db.run(table.size.result).map(Count)
   }
@@ -39,6 +43,14 @@ object StatsRoute extends AbstractRoute {
           get {
             onSuccess(count[Challenge](Challenge))(complete(_))
           }
+        } ~
+        path("active") {
+          get {
+            val count = db.run(
+              User.filter(_.lastActive > LocalDateTime.now().minusWeeks(1).toEpochSecond(ZoneOffset.UTC)).size.result
+            ).map(Count)
+            onSuccess(count)(complete(_))
+          }
         }
       } ~
       pathPrefix("latest") {
@@ -58,6 +70,12 @@ object StatsRoute extends AbstractRoute {
           get {
             val challenge = db.run(Challenge.sortBy(_.created.desc).take(1).result)
             onSuccess(challenge)(complete(_))
+          }
+        } ~
+        path("login") {
+          get {
+            val user = db.run(User.sortBy(_.lastActive.desc).take(1).result)
+            onSuccess(user)(complete(_))
           }
         }
       } ~
