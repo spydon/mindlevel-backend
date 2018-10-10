@@ -26,19 +26,19 @@ trait Tables {
    *  @param challengeId Database column challenge_id SqlType(INT)
    *  @param score Database column score SqlType(INT), Default(0)
    *  @param created Database column created SqlType(BIGINT), Default(None)
-   *  @param accomplishmentRestriction Database column accomplishment_restriction SqlType(INT), Default(0)
-   *  @param scoreRestriction Database column score_restriction SqlType(INT), Default(0) */
-  case class AccomplishmentRow(id: Int, title: String, description: String, image: String, challengeId: Int, score: Int = 0, created: Option[Long] = None, accomplishmentRestriction: Int = 0, scoreRestriction: Int = 0)
+   *  @param accomplishmentRestriction Database column accomplishment_restriction SqlType(INT), Default(Some(0))
+   *  @param scoreRestriction Database column score_restriction SqlType(INT), Default(Some(0)) */
+  case class AccomplishmentRow(id: Int, title: String, description: String, image: String, challengeId: Int, score: Int = 0, created: Option[Long] = None, accomplishmentRestriction: Option[Int] = Some(0), scoreRestriction: Option[Int] = Some(0))
   /** GetResult implicit for fetching AccomplishmentRow objects using plain SQL queries */
-  implicit def GetResultAccomplishmentRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Option[Long]]): GR[AccomplishmentRow] = GR{
+  implicit def GetResultAccomplishmentRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Option[Long]], e3: GR[Option[Int]]): GR[AccomplishmentRow] = GR{
     prs => import prs._
-    AccomplishmentRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<[Int], <<[Int], <<?[Long], <<[Int], <<[Int]))
+    AccomplishmentRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<[Int], <<[Int], <<?[Long], <<?[Int], <<?[Int]))
   }
   /** Table description of table accomplishment. Objects of this class serve as prototypes for rows in queries. */
   class Accomplishment(_tableTag: Tag) extends profile.api.Table[AccomplishmentRow](_tableTag, None, "accomplishment") {
     def * = (id, title, description, image, challengeId, score, created, accomplishmentRestriction, scoreRestriction) <> (AccomplishmentRow.tupled, AccomplishmentRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(title), Rep.Some(description), Rep.Some(image), Rep.Some(challengeId), Rep.Some(score), created, Rep.Some(accomplishmentRestriction), Rep.Some(scoreRestriction)).shaped.<>({r=>import r._; _1.map(_=> AccomplishmentRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7, _8.get, _9.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(title), Rep.Some(description), Rep.Some(image), Rep.Some(challengeId), Rep.Some(score), created, accomplishmentRestriction, scoreRestriction).shaped.<>({r=>import r._; _1.map(_=> AccomplishmentRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7, _8, _9)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(INT), AutoInc, PrimaryKey */
     val id: Rep[Int] = column[Int]("id", O.AutoInc, O.PrimaryKey)
@@ -54,10 +54,10 @@ trait Tables {
     val score: Rep[Int] = column[Int]("score", O.Default(0))
     /** Database column created SqlType(BIGINT), Default(None) */
     val created: Rep[Option[Long]] = column[Option[Long]]("created", O.Default(None))
-    /** Database column accomplishment_restriction SqlType(INT), Default(0) */
-    val accomplishmentRestriction: Rep[Int] = column[Int]("accomplishment_restriction", O.Default(0))
-    /** Database column score_restriction SqlType(INT), Default(0) */
-    val scoreRestriction: Rep[Int] = column[Int]("score_restriction", O.Default(0))
+    /** Database column accomplishment_restriction SqlType(INT), Default(Some(0)) */
+    val accomplishmentRestriction: Rep[Option[Int]] = column[Option[Int]]("accomplishment_restriction", O.Default(Some(0)))
+    /** Database column score_restriction SqlType(INT), Default(Some(0)) */
+    val scoreRestriction: Rep[Option[Int]] = column[Option[Int]]("score_restriction", O.Default(Some(0)))
 
     /** Foreign key referencing Challenge (database name fk_accomplishment_challenge) */
     lazy val challengeFk = foreignKey("fk_accomplishment_challenge", challengeId, Challenge)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
@@ -136,19 +136,19 @@ trait Tables {
    *  @param created Database column created SqlType(BIGINT), Default(0)
    *  @param creator Database column creator SqlType(VARCHAR), Length(191,true)
    *  @param validated Database column validated SqlType(BIT)
-   *  @param accomplishmentRestriction Database column accomplishment_restriction SqlType(INT), Default(0)
-   *  @param scoreRestriction Database column score_restriction SqlType(INT), Default(0) */
-  case class ChallengeRow(id: Int, title: String, description: String, image: String, created: Long = 0L, creator: String, validated: Boolean, accomplishmentRestriction: Int = 0, scoreRestriction: Int = 0)
+   *  @param accomplishmentRestriction Database column accomplishment_restriction SqlType(INT), Default(Some(0))
+   *  @param scoreRestriction Database column score_restriction SqlType(INT), Default(Some(0)) */
+  case class ChallengeRow(id: Int, title: String, description: String, image: String, created: Long = 0L, creator: String, validated: Boolean, accomplishmentRestriction: Option[Int] = Some(0), scoreRestriction: Option[Int] = Some(0))
   /** GetResult implicit for fetching ChallengeRow objects using plain SQL queries */
-  implicit def GetResultChallengeRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Long], e3: GR[Boolean]): GR[ChallengeRow] = GR{
+  implicit def GetResultChallengeRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Long], e3: GR[Boolean], e4: GR[Option[Int]]): GR[ChallengeRow] = GR{
     prs => import prs._
-    ChallengeRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<[Long], <<[String], <<[Boolean], <<[Int], <<[Int]))
+    ChallengeRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<[Long], <<[String], <<[Boolean], <<?[Int], <<?[Int]))
   }
   /** Table description of table challenge. Objects of this class serve as prototypes for rows in queries. */
   class Challenge(_tableTag: Tag) extends profile.api.Table[ChallengeRow](_tableTag, None, "challenge") {
     def * = (id, title, description, image, created, creator, validated, accomplishmentRestriction, scoreRestriction) <> (ChallengeRow.tupled, ChallengeRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(title), Rep.Some(description), Rep.Some(image), Rep.Some(created), Rep.Some(creator), Rep.Some(validated), Rep.Some(accomplishmentRestriction), Rep.Some(scoreRestriction)).shaped.<>({r=>import r._; _1.map(_=> ChallengeRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get, _9.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(title), Rep.Some(description), Rep.Some(image), Rep.Some(created), Rep.Some(creator), Rep.Some(validated), accomplishmentRestriction, scoreRestriction).shaped.<>({r=>import r._; _1.map(_=> ChallengeRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8, _9)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(INT), AutoInc, PrimaryKey */
     val id: Rep[Int] = column[Int]("id", O.AutoInc, O.PrimaryKey)
@@ -164,10 +164,10 @@ trait Tables {
     val creator: Rep[String] = column[String]("creator", O.Length(191,varying=true))
     /** Database column validated SqlType(BIT) */
     val validated: Rep[Boolean] = column[Boolean]("validated")
-    /** Database column accomplishment_restriction SqlType(INT), Default(0) */
-    val accomplishmentRestriction: Rep[Int] = column[Int]("accomplishment_restriction", O.Default(0))
-    /** Database column score_restriction SqlType(INT), Default(0) */
-    val scoreRestriction: Rep[Int] = column[Int]("score_restriction", O.Default(0))
+    /** Database column accomplishment_restriction SqlType(INT), Default(Some(0)) */
+    val accomplishmentRestriction: Rep[Option[Int]] = column[Option[Int]]("accomplishment_restriction", O.Default(Some(0)))
+    /** Database column score_restriction SqlType(INT), Default(Some(0)) */
+    val scoreRestriction: Rep[Option[Int]] = column[Option[Int]]("score_restriction", O.Default(Some(0)))
 
     /** Foreign key referencing User (database name fk_challenge_user) */
     lazy val userFk = foreignKey("fk_challenge_user", creator, User)(r => r.username, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
@@ -262,21 +262,21 @@ trait Tables {
    *  @param username Database column username SqlType(VARCHAR), PrimaryKey, Length(191,true)
    *  @param description Database column description SqlType(VARCHAR), Length(1024,true), Default(None)
    *  @param image Database column image SqlType(VARCHAR), Length(191,true), Default(Some(user.jpg))
-   *  @param score Database column score SqlType(INT)
-   *  @param level Database column level SqlType(INT)
+   *  @param score Database column score SqlType(INT), Default(Some(0))
+   *  @param level Database column level SqlType(INT), Default(Some(0))
    *  @param created Database column created SqlType(BIGINT)
    *  @param lastActive Database column last_active SqlType(BIGINT), Default(None) */
-  case class UserRow(username: String, description: Option[String] = None, image: Option[String] = Some("user.jpg"), score: Int, level: Int, created: Long, lastActive: Option[Long] = None)
+  case class UserRow(username: String, description: Option[String] = None, image: Option[String] = Some("user.jpg"), score: Option[Int] = Some(0), level: Option[Int] = Some(0), created: Long, lastActive: Option[Long] = None)
   /** GetResult implicit for fetching UserRow objects using plain SQL queries */
-  implicit def GetResultUserRow(implicit e0: GR[String], e1: GR[Option[String]], e2: GR[Int], e3: GR[Long], e4: GR[Option[Long]]): GR[UserRow] = GR{
+  implicit def GetResultUserRow(implicit e0: GR[String], e1: GR[Option[String]], e2: GR[Option[Int]], e3: GR[Long], e4: GR[Option[Long]]): GR[UserRow] = GR{
     prs => import prs._
-    UserRow.tupled((<<[String], <<?[String], <<?[String], <<[Int], <<[Int], <<[Long], <<?[Long]))
+    UserRow.tupled((<<[String], <<?[String], <<?[String], <<?[Int], <<?[Int], <<[Long], <<?[Long]))
   }
   /** Table description of table user. Objects of this class serve as prototypes for rows in queries. */
   class User(_tableTag: Tag) extends profile.api.Table[UserRow](_tableTag, None, "user") {
     def * = (username, description, image, score, level, created, lastActive) <> (UserRow.tupled, UserRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(username), description, image, Rep.Some(score), Rep.Some(level), Rep.Some(created), lastActive).shaped.<>({r=>import r._; _1.map(_=> UserRow.tupled((_1.get, _2, _3, _4.get, _5.get, _6.get, _7)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(username), description, image, score, level, Rep.Some(created), lastActive).shaped.<>({r=>import r._; _1.map(_=> UserRow.tupled((_1.get, _2, _3, _4, _5, _6.get, _7)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column username SqlType(VARCHAR), PrimaryKey, Length(191,true) */
     val username: Rep[String] = column[String]("username", O.PrimaryKey, O.Length(191,varying=true))
@@ -284,10 +284,10 @@ trait Tables {
     val description: Rep[Option[String]] = column[Option[String]]("description", O.Length(1024,varying=true), O.Default(None))
     /** Database column image SqlType(VARCHAR), Length(191,true), Default(Some(user.jpg)) */
     val image: Rep[Option[String]] = column[Option[String]]("image", O.Length(191,varying=true), O.Default(Some("user.jpg")))
-    /** Database column score SqlType(INT) */
-    val score: Rep[Int] = column[Int]("score")
-    /** Database column level SqlType(INT) */
-    val level: Rep[Int] = column[Int]("level")
+    /** Database column score SqlType(INT), Default(Some(0)) */
+    val score: Rep[Option[Int]] = column[Option[Int]]("score", O.Default(Some(0)))
+    /** Database column level SqlType(INT), Default(Some(0)) */
+    val level: Rep[Option[Int]] = column[Option[Int]]("level", O.Default(Some(0)))
     /** Database column created SqlType(BIGINT) */
     val created: Rep[Long] = column[Long]("created")
     /** Database column last_active SqlType(BIGINT), Default(None) */
