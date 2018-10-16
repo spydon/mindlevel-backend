@@ -28,8 +28,8 @@ VALUES (
 
 INSERT INTO challenge (title, description, image, creator, validated)
 VALUES (
-"Take some illegal substance", 
-"What are you poppin' tonight?", "5.jpg", "Community", True);
+"Eat some nice ice cream", 
+"What ice cream are you eating tonight?", "5.jpg", "Community", True);
 
 INSERT INTO challenge (title, description, image, creator, validated)
 VALUES (
