@@ -19,7 +19,7 @@ object ChallengeRoute extends AbstractRoute {
   def removeRestricted(session: String)(challenges: Query[Challenge, Challenge#TableElementType, Seq]):
   Future[Seq[Challenge#TableElementType]] = {
     userFromSession(session).map { user =>
-      challenges.filter(_.scoreRestriction <= user.score).filter(_.accomplishmentRestriction <= user.level)
+      challenges.filter(_.scoreRestriction <= user.score).filter(_.levelRestriction <= user.level)
     }.flatMap(q => db.run(q.result))
   }
 
