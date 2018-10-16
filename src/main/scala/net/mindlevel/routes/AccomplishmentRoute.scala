@@ -81,7 +81,19 @@ object AccomplishmentRoute extends AbstractRoute {
                             }
                           val contributorSet = (creatorAccomplishmentRow :: contributorRows).toSet
                           onSuccess(db.run(UserAccomplishment ++= contributorSet)) { _ =>
-                            complete(accomplishment)
+                            val user = for { u <- User if u.username === username } yield u.level
+                            // Take out all accomplishments for a user and count the unique ones
+                            val levelQuery = (for {
+                              (a, ua) <- Accomplishment join UserAccomplishment on (_.id === _.accomplishmentId)
+                                         if ua.username === username
+                            } yield a.challengeId).distinct.size
+                            onSuccess(db.run(levelQuery.result)) { level =>
+                              val userUpdate = db.run(user.update(Some(level)))
+                              onSuccess(userUpdate) { _ =>
+                                complete(accomplishment)
+                              }
+                            }
+
                           }
                         }
                       }
@@ -170,7 +182,8 @@ object AccomplishmentRoute extends AbstractRoute {
                               SET u.score = u.score + $scoreValue, a.score = a.score + $scoreValue
                               WHERE a.id = $id"""
 
-                            db.run(updateScore) // Fire and forget, significant race?
+                            // Fire and forget, significant race? (Can be recounted from accomplishment_like)
+                            db.run(updateScore)
                             scoreResponse(true)
                           case _ =>
                             scoreResponse(false) // Already liked or user does not have 1 accomplishment yet

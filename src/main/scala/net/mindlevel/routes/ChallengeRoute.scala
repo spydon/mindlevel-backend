@@ -17,8 +17,8 @@ import scala.util.{Failure, Success}
 
 object ChallengeRoute extends AbstractRoute {
   def removeRestricted(session: String)(challenges: Query[Challenge, Challenge#TableElementType, Seq]):
-    Future[Seq[Challenge#TableElementType]] = {
-      userFromSession(session).map { user =>
+  Future[Seq[Challenge#TableElementType]] = {
+    userFromSession(session).map { user =>
       challenges.filter(_.scoreRestriction <= user.score).filter(_.accomplishmentRestriction <= user.level)
     }.flatMap(q => db.run(q.result))
   }
