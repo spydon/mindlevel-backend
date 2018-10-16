@@ -21,12 +21,13 @@ rm -rf ./mindlevel-backend &&
 git clone -b release git@github.com:spydon/mindlevel-backend.git > /dev/null &&
 echo "Cloned the release branch of the project" &&
 cd mindlevel-backend &&
+echo "Test local database migration" &&
 sh database/upgrade.sh localhost mindlevel &&
 sh database/upgrade.sh localhost custom &&
-echo "Setup the local database to build Slick structures from" &&
+echo "Build fat jar" &&
 sbt assembly > /dev/null &&
-echo "Built a fat jar" &&
 cd .. &&
+echo "Build docker image" &&
 docker build -t mindlevel . > /dev/null &&
 docker tag mindlevel:latest $awsRepo > /dev/null &&
 $(aws ecr get-login --region eu-central-1 --no-include-email) &&
@@ -37,5 +38,7 @@ sed '/\([{}].*\|.*taskArns.*\| *]\)/d' | sed 's/ *"\([^"]*\).*/\1/' | \
 while read -r task; do aws ecs stop-task --cluster mindlevel --task $task; done > /dev/null &&
 aws ecs run-task --cluster mindlevel --task-definition mindlevel --count 1 > /dev/null &&
 # Have to deregister and register with the load balancers target group
+TARGET_ID=$(aws ec2 describe-instances | python2 -c 'import sys, json; print json.load(sys.stdin)["Reservations"][0]["Instances"][0]["InstanceId"]') &&
+aws elbv2 register-targets --target-group-arn arn:aws:elasticloadbalancing:eu-central-1:589361660625:targetgroup/ecs-target-group/a650f52dfd7ae760 --targets Id=$TARGET_ID &&
 rm -rf ./mindlevel-backend &&
 echo "Successfully restarted the ECS task" || echo "Something failed"
