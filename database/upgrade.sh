@@ -7,7 +7,7 @@ echo "================================================================="
 echo " This will result in a few milliseconds of downtime for $SCHEMA   "
 echo "================================================================="
 cd "$(dirname "$0")" &&
-mysqldump -uroot -ppassword -h$DB_HOST --no-create-info $SCHEMA > ${SCHEMA}_backup.sql &&
+mysqldump -uroot -ppassword -h$DB_HOST --default-character-set=utf8 --complete-insert --no-create-info $SCHEMA -r ${SCHEMA}_backup.sql &&
 [ -s ${SCHEMA}_backup.sql ] &&
 mysqladmin -uroot -ppassword -h$DB_HOST -f drop $SCHEMA &&
 mysql -uroot -ppassword -h$DB_HOST < ${SCHEMA}_schema.sql &&

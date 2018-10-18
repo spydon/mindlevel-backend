@@ -68,6 +68,18 @@ object AccomplishmentRoute extends AbstractRoute {
                       Unmarshal(parts("contributors")).to[Contributors].map(_.contributors)
                     }
 
+                    def updateLevelCount(username: String): Future[Int] = {
+                      val user = for { u <- User if u.username === username } yield u.level
+                      // Take out all accomplishments for a user and count the unique ones
+                      val levelQuery = (for {
+                        (a, ua) <- Accomplishment join UserAccomplishment on (_.id === _.accomplishmentId)
+                        if ua.username === username
+                      } yield a.challengeId).distinct.size
+                      db.run(levelQuery.result).flatMap[Int] { level =>
+                        db.run(user.update(Some(level)))
+                      }
+                    }
+
                     onSuccess(row) { accomplishment =>
                       val accomplishmentWithIdQuery =
                         Accomplishment returning Accomplishment.map(_.id) into ((accomplishment: AccomplishmentRow, id) =>
@@ -81,19 +93,8 @@ object AccomplishmentRoute extends AbstractRoute {
                             }
                           val contributorSet = (creatorAccomplishmentRow :: contributorRows).toSet
                           onSuccess(db.run(UserAccomplishment ++= contributorSet)) { _ =>
-                            val user = for { u <- User if u.username === username } yield u.level
-                            // Take out all accomplishments for a user and count the unique ones
-                            val levelQuery = (for {
-                              (a, ua) <- Accomplishment join UserAccomplishment on (_.id === _.accomplishmentId)
-                                         if ua.username === username
-                            } yield a.challengeId).distinct.size
-                            onSuccess(db.run(levelQuery.result)) { level =>
-                              val userUpdate = db.run(user.update(Some(level)))
-                              onSuccess(userUpdate) { _ =>
-                                complete(accomplishment)
-                              }
-                            }
-
+                            contributors.foreach(u => updateLevelCount(u))
+                            complete(accomplishment)
                           }
                         }
                       }
