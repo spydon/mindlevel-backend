@@ -60,7 +60,7 @@ object AccomplishmentRoute extends AbstractRoute {
 
                     val row = allParts.flatMap { parts =>
                       Unmarshal(parts("accomplishment")).to[AccomplishmentRow].map {
-                        _.copy(image = parts("image"), score = 0, created = Some(now()))
+                        _.copy(image = parts("image"), score = 0, created = Some(now()), levelRestriction = Some(0), scoreRestriction = Some(0))
                       }
                     }
 

@@ -148,6 +148,12 @@ VALUES (
 "Go outside and find a cat, try to get that cat to strike a pose that you can photograph. Harder than it sounds!",
 "23_catographer.jpg", "Community", True);
 
+INSERT INTO challenge (title, description, image, creator, validated)
+VALUES (
+"Dressier",
+"Go all in with dressing up for a halloween or masquerade party.",
+"24_halloween.jpg", "Community", True);
+
 INSERT INTO category (name, image)
 VALUES
 ("Simple", "category_simple.jpg");
@@ -185,3 +191,4 @@ VALUES
 (21, 1),
 (22, 2),
 (23, 2);
+(24, 1);

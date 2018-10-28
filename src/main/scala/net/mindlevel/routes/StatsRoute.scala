@@ -1,7 +1,6 @@
 package net.mindlevel.routes
 
-import java.sql.Timestamp
-import java.time.{LocalDateTime, ZoneId, ZoneOffset}
+import java.time.{LocalDateTime, ZoneOffset}
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Directives._
@@ -58,6 +57,12 @@ object StatsRoute extends AbstractRoute {
           get {
             val user = db.run(User.sortBy(_.created.desc).take(1).result)
             onSuccess(user)(complete(_))
+          }
+        } ~
+        path("username") {
+          get {
+            val username = db.run(User.sortBy(_.created.desc).take(1).map(_.username).result)
+            onSuccess(username)(complete(_))
           }
         } ~
         path("accomplishment") {
