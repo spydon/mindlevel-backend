@@ -75,6 +75,12 @@ object ChallengeRoute extends AbstractRoute {
                 }
               }
           } ~
+          path("restricted") {
+            get {
+              // TODO: Make this not return name and description of challenge
+              complete(db.run(Challenge.result))
+            }
+          } ~
           pathPrefix("category") {
             pathEndOrSingleSlash {
               get {
