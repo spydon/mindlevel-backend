@@ -11,5 +11,5 @@ mysqldump -uroot -ppassword -h$DB_HOST --default-character-set=utf8mb4 --complet
 [ -s ${SCHEMA}_backup.sql ] &&
 mysqladmin -uroot -ppassword -h$DB_HOST -f drop $SCHEMA &&
 mysql -uroot -ppassword -h$DB_HOST --default-character-set=utf8mb4 < ${SCHEMA}_schema.sql &&
-mysql -uroot -ppassword -h$DB_HOST $SCHEMA --default-character-set=utf8mb4 < ${SCHEMA}_backup.sql &&
+mysql -uroot -ppassword -h$DB_HOST $SCHEMA --default-character-set=utf8mb4 -e "SET NAMES utf8mb4; SOURCE "${SCHEMA}"_backup.sql;" &&
 echo "Successfully moved to new schema" || (echo "Something failed" && false)

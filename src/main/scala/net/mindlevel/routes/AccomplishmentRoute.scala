@@ -58,9 +58,18 @@ object AccomplishmentRoute extends AbstractRoute {
 
                     }.runFold(Map.empty[String, String])((map, tuple) => map + tuple)
 
+                    // TODO: Might want restriction on whether client can set level restriction in the request or if it
+                    // should take the level restriction of the challenge
                     val row = allParts.flatMap { parts =>
-                      Unmarshal(parts("accomplishment")).to[AccomplishmentRow].map {
-                        _.copy(image = parts("image"), score = 0, created = Some(now()), levelRestriction = Some(0), scoreRestriction = Some(0))
+                      Unmarshal(parts("accomplishment")).to[AccomplishmentRow].map { accomplishmentRow =>
+                        val level = Some(accomplishmentRow.levelRestriction.getOrElse(0))
+                        accomplishmentRow.copy(
+                          image = parts("image"),
+                          score = 0,
+                          created = Some(now()),
+                          levelRestriction = level,
+                          scoreRestriction = Some(0)
+                        )
                       }
                     }
 
@@ -97,6 +106,7 @@ object AccomplishmentRoute extends AbstractRoute {
                             contributors.map { contributor =>
                               UserAccomplishmentRow(username = contributor, accomplishmentId = accomplishment.id)
                             }
+                          // TODO: Contributors need to be checked whether or not they are allowed to finish the challenge
                           val contributorSet = (creatorAccomplishmentRow :: contributorRows).toSet
                           onSuccess(db.run(UserAccomplishment ++= contributorSet)) { _ =>
                             contributors.foreach(u => updateLevelCount(u))
