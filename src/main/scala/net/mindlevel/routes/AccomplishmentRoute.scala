@@ -85,7 +85,7 @@ object AccomplishmentRoute extends AbstractRoute {
                         Accomplishment returning Accomplishment.map(_.id) into ((accomplishment: AccomplishmentRow, id) =>
                           accomplishment.copy(id = id)) += accomplishment
                       onSuccess(db.run(accomplishmentWithIdQuery)) { accomplishment =>
-                        if (accomplishment.id == 0) {
+                        if (accomplishment.challengeId == 0) {
                           // Update users profile pic if this was accomplishment 0
                           val user = for { u <- User if u.username === username } yield u.image
                           db.run(user.update(Some(accomplishment.image)))
