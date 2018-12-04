@@ -32,7 +32,7 @@ object AccomplishmentRoute extends AbstractRoute {
 
   def route: Route =
     pathPrefix("accomplishment") {
-      headerValueByName("X-Session") { session =>
+      sessionId { session =>
         def clean = removeRestricted(session)(_)
 
         def cleanHead(query: AccomplishmentQuery) =

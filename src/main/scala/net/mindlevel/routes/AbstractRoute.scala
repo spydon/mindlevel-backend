@@ -4,7 +4,9 @@ import java.sql.Timestamp
 import java.time.Instant
 import java.util.UUID
 
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.{Directive1, Route}
+import akka.http.scaladsl.server.Directives._
 import com.github.t3hnar.bcrypt._
 import com.typesafe.config.ConfigFactory
 import net.mindlevel.models.Tables._
@@ -13,7 +15,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, JsNumber, JsValue, JsonFormat}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 
 private object DBSingleton {
   val default = Database.forConfig("db.default")
@@ -85,6 +87,23 @@ trait AbstractRoute {
   protected implicit val customDbFormat = jsonFormat3(CustomDbRow)
 
   protected case class AuthException(msg: String) extends IllegalAccessException(msg)
+
+  protected def sessionId: Directive1[String] = {
+    def isTokenValid(token: String): Boolean = {
+      import scala.concurrent.duration._
+      // TODO: This is going to slow down the backend, refactor
+      Await.result(nameFromSession(token), 10.second).isDefined
+    }
+
+    optionalHeaderValueByName("X-Session").flatMap {
+      case Some(token) if isTokenValid(token) =>
+        provide(token)
+      case Some(_) =>
+        complete(StatusCodes.Unauthorized -> "Token not valid, most likely expired.")
+      case None =>
+        complete(StatusCodes.Unauthorized -> "Token not provided")
+    }
+  }
 
   protected def nameFromSession(session: String): Future[Option[String]] = {
     db.run(Session.filter(_.session === session).map(_.username).result.headOption)

@@ -28,63 +28,63 @@ import scala.util.{Failure, Success}
 object UserRoute extends AbstractRoute {
   def route: Route =
     pathPrefix("user") {
-      pathEndOrSingleSlash {
-        get {
-          onSuccess(db.run(User.result)) {
-            complete(_)
-          }
-        } ~
-          post {
-            entity(as[LoginFormat]) { login =>
-              val actions = mutable.ArrayBuffer[DBIOAction[Int, NoStream, Write with Transactional]]()
-              val userExtra = UserExtraRow(username = login.username, password = login.password.get.bcrypt, email = "")
-              val processedUser = UserRow(username = login.username, score = Some(0), level = Some(0), created = now)
-              val emptySession = SessionRow(username = login.username, session = null)
-
-              actions += (User += processedUser)
-              actions += (UserExtra += userExtra)
-              actions += (Session += emptySession)
-
-              val maybeUpdated = db.run(DBIO.seq(actions.map(_.transactionally): _*))
-
-              onSuccess(maybeUpdated)(complete(StatusCodes.OK))
-            }
-          }
-      } ~
-        path("usernames") {
-          // Deprecated, old versions still rely on this, use stats route instead
+      sessionId { session =>
+        pathEndOrSingleSlash {
           get {
-            pathPrefix("highscore") {
-              val usernames = db.run(User.map(_.username).result)
-              onSuccess(usernames)(complete(_))
+            onSuccess(db.run(User.result)) {
+              complete(_)
             }
-          }
-        } ~
-        pathPrefix("highscore") {
-          // Deprecated, old versions still rely on this, use stats route instead
-          path(IntNumber) { amount =>
-            get {
-              val users = db.run(User.sortBy(_.score.desc).take(amount).result)
-              onSuccess(users)(complete(_))
-            }
-          }
-        } ~
-        pathPrefix(Segment) { username =>
-          pathEndOrSingleSlash {
-            get {
-              val maybeUser = db.run(User.filter(_.username === username).result.headOption)
+          } ~
+            post {
+              entity(as[LoginFormat]) { login =>
+                val actions = mutable.ArrayBuffer[DBIOAction[Int, NoStream, Write with Transactional]]()
+                val userExtra = UserExtraRow(username = login.username, password = login.password.get.bcrypt, email = "")
+                val processedUser = UserRow(username = login.username, score = Some(0), level = Some(0), created = now)
+                val emptySession = SessionRow(username = login.username, session = null)
 
-              onSuccess(maybeUser) {
-                case Some(user) => complete(user)
-                case None => complete(StatusCodes.NotFound)
+                actions += (User += processedUser)
+                actions += (UserExtra += userExtra)
+                actions += (Session += emptySession)
+
+                val maybeUpdated = db.run(DBIO.seq(actions.map(_.transactionally): _*))
+
+                onSuccess(maybeUpdated)(complete(StatusCodes.OK))
               }
-            } ~
-              put {
-                extractRequestContext { ctx =>
-                  implicit val materializer = ctx.materializer
-                  implicit val ec = ctx.executionContext
-                  entity(as[Multipart.FormData]) { formData =>
-                    headerValueByName("X-Session") { session =>
+            }
+        } ~
+          path("usernames") {
+            // Deprecated, old versions still rely on this, use stats route instead
+            get {
+              pathPrefix("highscore") {
+                val usernames = db.run(User.map(_.username).result)
+                onSuccess(usernames)(complete(_))
+              }
+            }
+          } ~
+          pathPrefix("highscore") {
+            // Deprecated, old versions still rely on this, use stats route instead
+            path(IntNumber) { amount =>
+              get {
+                val users = db.run(User.sortBy(_.score.desc).take(amount).result)
+                onSuccess(users)(complete(_))
+              }
+            }
+          } ~
+          pathPrefix(Segment) { username =>
+            pathEndOrSingleSlash {
+              get {
+                val maybeUser = db.run(User.filter(_.username === username).result.headOption)
+
+                onSuccess(maybeUser) {
+                  case Some(user) => complete(user)
+                  case None => complete(StatusCodes.NotFound)
+                }
+              } ~
+                put {
+                  extractRequestContext { ctx =>
+                    implicit val materializer = ctx.materializer
+                    implicit val ec = ctx.executionContext
+                    entity(as[Multipart.FormData]) { formData =>
                       val allParts: Future[Map[String, String]] = formData.parts.mapAsync[(String, String)](1) {
 
                         case b: BodyPart if b.name == "image" =>
@@ -144,18 +144,16 @@ object UserRoute extends AbstractRoute {
 
                       onSuccess(isUpdated) { result => result } // TODO: Smarter extraction
                     }
-                  }
-                } ~
-                  entity(as[LoginFormat]) { user =>
-                    onSuccess(updatePassword(user)) { session =>
-                      complete(session)
+                  } ~
+                    entity(as[LoginFormat]) { user =>
+                      onSuccess(updatePassword(user)) { session =>
+                        complete(session)
+                      }
                     }
-                  }
-              }
-          } ~
-            path("email") {
-              get {
-                headerValueByName("X-Session") { session =>
+                }
+            } ~
+              path("email") {
+                get {
                   onSuccess(isAuthorized(username, session)) {
                     case true =>
                       val query = db.run(UserExtra.filter(_.username === username).map(_.email).result.headOption)
@@ -164,11 +162,9 @@ object UserRoute extends AbstractRoute {
                       complete(StatusCodes.Unauthorized)
                   }
                 }
-              }
-            } ~
-            path("image") {
-              post {
-                headerValueByName("X-Session") { session =>
+              } ~
+              path("image") {
+                post {
                   onSuccess(isAuthorized(username, session)) {
                     case true =>
                       extractRequestContext { ctx =>
@@ -177,7 +173,7 @@ object UserRoute extends AbstractRoute {
                         fileUpload("image") {
                           case (fileInfo, fileStream) =>
                             val filename = fileInfo.fileName // TODO: Hash later
-                            val sink = FileIO.toPath(Paths.get("/tmp") resolve filename)
+                          val sink = FileIO.toPath(Paths.get("/tmp") resolve filename)
                             val writeResult = fileStream.runWith(sink)
                             onSuccess(writeResult) { result =>
                               result.status match {
@@ -195,16 +191,16 @@ object UserRoute extends AbstractRoute {
                       complete(StatusCodes.Unauthorized)
                   }
                 }
+              } ~
+              path("accomplishment") {
+                get {
+                  val accomplishments = db.run(UserAccomplishment.filter(_.username === username).flatMap(ua =>
+                    Accomplishment.filter(_.id === ua.accomplishmentId)
+                  ).result)
+                  complete(accomplishments)
+                }
               }
-            } ~
-            path("accomplishment") {
-              get {
-                val accomplishments = db.run(UserAccomplishment.filter(_.username === username).flatMap( ua =>
-                  Accomplishment.filter(_.id === ua.accomplishmentId)
-                ).result)
-                complete(accomplishments)
-              }
-            }
-        }
+          }
+      }
     }
 }
