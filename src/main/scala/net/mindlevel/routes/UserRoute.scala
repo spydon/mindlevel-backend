@@ -28,49 +28,49 @@ import scala.util.{Failure, Success}
 object UserRoute extends AbstractRoute {
   def route: Route =
     pathPrefix("user") {
-      sessionId { session =>
-        pathEndOrSingleSlash {
-          get {
-            onSuccess(db.run(User.result)) {
-              complete(_)
-            }
-          } ~
-            post {
-              entity(as[LoginFormat]) { login =>
-                val actions = mutable.ArrayBuffer[DBIOAction[Int, NoStream, Write with Transactional]]()
-                val userExtra = UserExtraRow(username = login.username, password = login.password.get.bcrypt, email = "")
-                val processedUser = UserRow(username = login.username, score = Some(0), level = Some(0), created = now)
-                val emptySession = SessionRow(username = login.username, session = null)
-
-                actions += (User += processedUser)
-                actions += (UserExtra += userExtra)
-                actions += (Session += emptySession)
-
-                val maybeUpdated = db.run(DBIO.seq(actions.map(_.transactionally): _*))
-
-                onSuccess(maybeUpdated)(complete(StatusCodes.OK))
-              }
-            }
+      pathEndOrSingleSlash {
+        get {
+          onSuccess(db.run(User.result)) {
+            complete(_)
+          }
         } ~
-          path("usernames") {
-            // Deprecated, old versions still rely on this, use stats route instead
+          post {
+            entity(as[LoginFormat]) { login =>
+              val actions = mutable.ArrayBuffer[DBIOAction[Int, NoStream, Write with Transactional]]()
+              val userExtra = UserExtraRow(username = login.username, password = login.password.get.bcrypt, email = "")
+              val processedUser = UserRow(username = login.username, score = Some(0), level = Some(0), created = now)
+              val emptySession = SessionRow(username = login.username, session = null)
+
+              actions += (User += processedUser)
+              actions += (UserExtra += userExtra)
+              actions += (Session += emptySession)
+
+              val maybeUpdated = db.run(DBIO.seq(actions.map(_.transactionally): _*))
+
+              onSuccess(maybeUpdated)(complete(StatusCodes.OK))
+            }
+          }
+      } ~
+        path("usernames") {
+          // Deprecated, old versions still rely on this, use stats route instead
+          get {
+            pathPrefix("highscore") {
+              val usernames = db.run(User.map(_.username).result)
+              onSuccess(usernames)(complete(_))
+            }
+          }
+        } ~
+        pathPrefix("highscore") {
+          // Deprecated, old versions still rely on this, use stats route instead
+          path(IntNumber) { amount =>
             get {
-              pathPrefix("highscore") {
-                val usernames = db.run(User.map(_.username).result)
-                onSuccess(usernames)(complete(_))
-              }
+              val users = db.run(User.sortBy(_.score.desc).take(amount).result)
+              onSuccess(users)(complete(_))
             }
-          } ~
-          pathPrefix("highscore") {
-            // Deprecated, old versions still rely on this, use stats route instead
-            path(IntNumber) { amount =>
-              get {
-                val users = db.run(User.sortBy(_.score.desc).take(amount).result)
-                onSuccess(users)(complete(_))
-              }
-            }
-          } ~
-          pathPrefix(Segment) { username =>
+          }
+        } ~
+        pathPrefix(Segment) { username =>
+          sessionId { session =>
             pathEndOrSingleSlash {
               get {
                 val maybeUser = db.run(User.filter(_.username === username).result.headOption)
@@ -108,6 +108,7 @@ object UserRoute extends AbstractRoute {
                       val isUpdated = row.flatMap { userRow =>
                         isAuthorized(userRow.username, session) flatMap {
                           case true =>
+
                             val actions = mutable.ArrayBuffer[DBIOAction[Int, NoStream, Write with Transactional]]()
                             val query = User.withFilter(_.username === userRow.username)
                             val extraQuery = UserExtra.withFilter(_.username === userRow.username)
@@ -201,6 +202,6 @@ object UserRoute extends AbstractRoute {
                 }
               }
           }
-      }
+        }
     }
 }
