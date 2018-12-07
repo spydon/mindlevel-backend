@@ -89,19 +89,20 @@ trait AbstractRoute {
   protected case class AuthException(msg: String) extends IllegalAccessException(msg)
 
   protected def sessionId: Directive1[String] = {
-    def isTokenValid(token: String): Boolean = {
+    def isSessionValid(session: String): Boolean = {
+      updateLastActiveSession(session)
       import scala.concurrent.duration._
       // TODO: This is going to slow down the backend, refactor
-      Await.result(nameFromSession(token), 10.second).isDefined
+      Await.result(nameFromSession(session), 10.second).isDefined
     }
 
     optionalHeaderValueByName("X-Session").flatMap {
-      case Some(token) if isTokenValid(token) =>
-        provide(token)
+      case Some(session) if isSessionValid(session) =>
+        provide(session)
       case Some(_) =>
-        complete(StatusCodes.Unauthorized -> "Token not valid, most likely expired.")
+        complete(StatusCodes.Unauthorized -> "Session not valid, most likely expired.")
       case None =>
-        complete(StatusCodes.Unauthorized -> "Token not provided")
+        complete(StatusCodes.Unauthorized -> "Session not provided")
     }
   }
 
@@ -142,6 +143,12 @@ trait AbstractRoute {
             .filter(_.creator === username).exists.result)
       case None =>
         Future(false)
+    }
+  }
+
+  protected def updateLastActiveSession(session: String): Future[Boolean] = {
+    userFromSession(session) flatMap { user =>
+      updateLastActive(user.username)
     }
   }
 
