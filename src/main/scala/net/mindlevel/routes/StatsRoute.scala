@@ -77,7 +77,7 @@ object StatsRoute extends AbstractRoute {
             onSuccess(challenge)(complete(_))
           }
         } ~
-        path("login") {
+        path("active") {
           get {
             val user = db.run(User.sortBy(_.lastActive.desc).take(1).result)
             onSuccess(user)(complete(_))

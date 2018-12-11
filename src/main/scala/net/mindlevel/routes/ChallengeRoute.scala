@@ -1,12 +1,17 @@
 package net.mindlevel.routes
 
+import java.io.File
 import java.nio.file.Paths
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.Multipart.FormData.BodyPart
+import akka.http.scaladsl.model.{Multipart, StatusCodes}
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.{AuthorizationFailedRejection, Route}
+import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import scala.concurrent.duration._
 import akka.stream.scaladsl.FileIO
+import net.mindlevel.S3Util
 import net.mindlevel.models.Tables._
 import slick.jdbc.MySQLProfile.api._
 import spray.json.DefaultJsonProtocol._
@@ -19,7 +24,10 @@ object ChallengeRoute extends AbstractRoute {
   def removeRestricted(session: String)(challenges: Query[Challenge, Challenge#TableElementType, Seq]):
   Future[Seq[Challenge#TableElementType]] = {
     userFromSession(session).map { user =>
-      challenges.filter(_.scoreRestriction <= user.score).filter(_.levelRestriction <= user.level)
+      challenges
+        .filter(_.scoreRestriction <= user.score)
+        .filter(_.levelRestriction <= user.level)
+        .filter(_.validated)
     }.flatMap(q => db.run(q.result))
   }
 
@@ -33,12 +41,51 @@ object ChallengeRoute extends AbstractRoute {
             complete(clean(Challenge))
           } ~
             post {
-              entity(as[ChallengeRow]) { challenge =>
-                val nonValidatedChallenge = challenge.copy(validated = false)
-                val maybeInserted = db.run(Challenge += nonValidatedChallenge)
-                onSuccess(maybeInserted) {
-                  case 1 => complete(StatusCodes.OK)
-                  case _ => complete(StatusCodes.BadRequest)
+              extractRequestContext { ctx =>
+                implicit val materializer = ctx.materializer
+                implicit val ec = ctx.executionContext
+                entity(as[Multipart.FormData]) { formData =>
+                  onSuccess(nameFromSession(session)) {
+                    case Some(username) =>
+                      // collect all parts of the multipart as it arrives into a map
+                      val allParts: Future[Map[String, String]] = formData.parts.mapAsync[(String, String)](1) {
+
+                        case b: BodyPart if b.name == "image" =>
+                          val file = File.createTempFile("upload", "tmp")
+                          b.entity.dataBytes.runWith(FileIO.toPath(file.toPath)).map(_ => "image" -> S3Util.put(file))
+
+                        case b: BodyPart =>
+                          b.toStrict(2.seconds).map(strict => b.name -> strict.entity.data.utf8String)
+
+                      }.runFold(Map.empty[String, String])((map, tuple) => map + tuple)
+
+                      // TODO: Might want restriction on whether client can set level restriction in the request or if it
+                      // should take the level restriction of the challenge
+                      val row = allParts.flatMap { parts =>
+                        Unmarshal(parts("challenge")).to[ChallengeRow].map { challengeRow =>
+                          challengeRow.copy(
+                            image = parts("image"),
+                            created = now(),
+                            creator = username,
+                            validated = false,
+                            levelRestriction = None,
+                            scoreRestriction = None
+                          )
+                        }
+                      }
+
+                      onSuccess(row) { challenge =>
+                        onSuccess(db.run(Challenge += challenge)) { result =>
+                          if (result > 0) {
+                            complete(StatusCodes.OK)
+                          } else {
+                            complete(StatusCodes.InternalServerError)
+                          }
+                        }
+                      }
+                    case _ =>
+                      complete(StatusCodes.Unauthorized)
+                  }
                 }
               }
             }
@@ -78,7 +125,7 @@ object ChallengeRoute extends AbstractRoute {
           path("restricted") {
             get {
               // TODO: Make this not return name and description of challenge
-              complete(db.run(Challenge.result))
+              complete(db.run(Challenge.filter(_.validated).result))
             }
           } ~
           pathPrefix("category") {

@@ -225,6 +225,7 @@ object AccomplishmentRoute extends AbstractRoute {
                       onSuccess(isAuthorizedToAccomplishment(id, session)) {
                         case true =>
                           val userAccomplishmentRows = usernames.toSet[String].map(UserAccomplishmentRow(_, id))
+                          // TODO: Ignore duplicate entry exceptions
                           val maybeInserted = db.run(UserAccomplishment ++= userAccomplishmentRows)
                           onSuccess(maybeInserted) {
                             case Some(_) => complete(StatusCodes.OK)
