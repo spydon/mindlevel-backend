@@ -1,5 +1,5 @@
-INSERT INTO user (username, description, image, score, created) 
-VALUES ("Community", "", "community.jpg", 0, 0);
+INSERT INTO user (username, description, image, score, `level`, created)
+VALUES ("Community", "", "community.jpg", 0, 0, 0);
 
 INSERT INTO user_extra (username, password, email) 
 VALUES ("Community", "$2a$10$dNvnLK3ZYSyjlwyyAc0Me.FbNvi2yEf6KPKKld62edoC8gChkVGpC", "me@lukas.fyi");

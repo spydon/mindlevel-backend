@@ -20,7 +20,8 @@ import scala.concurrent.{Await, Future}
 private object DBSingleton {
   val default = Database.forConfig("db.default")
   val custom = Database.forConfig("db.custom")
-  val dbs = Map("default" -> default, "custom" -> custom)
+  val veglevel = Database.forConfig("db.veglevel")
+  val dbs = Map("default" -> default, "custom" -> custom, "veglevel" -> veglevel)
 
   def db(name: String): Database = dbs.getOrElse(name, default)
 }
