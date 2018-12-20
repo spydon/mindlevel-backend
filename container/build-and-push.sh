@@ -24,6 +24,7 @@ cd mindlevel-backend &&
 echo "Test local database migration" &&
 sh database/upgrade.sh localhost mindlevel &&
 sh database/upgrade.sh localhost custom &&
+sh database/upgrade.sh localhost veglevel &&
 echo "Build fat jar" &&
 sbt assembly > /dev/null &&
 cd .. &&
