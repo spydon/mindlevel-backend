@@ -136,9 +136,13 @@ object ChallengeRoute extends AbstractRoute {
             } ~
               path(IntNumber) { categoryId =>
                 get {
-                  val challenges = db.run(ChallengeCategory.filter(_.categoryId === categoryId).flatMap(cc =>
-                    Challenge.filter(_.id === cc.challengeId)
-                  ).result)
+                  val challenges = clean(
+                    ChallengeCategory
+                      .filter(_.categoryId === categoryId)
+                      .flatMap(cc =>
+                        Challenge.filter(_.id === cc.challengeId)
+                      )
+                  )
                   complete(challenges)
                 }
               }
