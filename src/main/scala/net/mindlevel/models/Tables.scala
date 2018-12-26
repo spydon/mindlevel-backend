@@ -133,16 +133,16 @@ trait Tables {
    *  @param title Database column title SqlType(VARCHAR), Length(191,true)
    *  @param description Database column description SqlType(VARCHAR), Length(1024,true)
    *  @param image Database column image SqlType(VARCHAR), Length(191,true)
-   *  @param created Database column created SqlType(BIGINT), Default(0)
+   *  @param created Database column created SqlType(TIMESTAMP)
    *  @param creator Database column creator SqlType(VARCHAR), Length(191,true)
    *  @param validated Database column validated SqlType(BIT)
    *  @param levelRestriction Database column level_restriction SqlType(INT), Default(Some(0))
    *  @param scoreRestriction Database column score_restriction SqlType(INT), Default(Some(0)) */
-  case class ChallengeRow(id: Int, title: String, description: String, image: String, created: Long = 0L, creator: String, validated: Boolean, levelRestriction: Option[Int] = Some(0), scoreRestriction: Option[Int] = Some(0))
+  case class ChallengeRow(id: Int, title: String, description: String, image: String, created: java.sql.Timestamp, creator: String, validated: Boolean, levelRestriction: Option[Int] = Some(0), scoreRestriction: Option[Int] = Some(0))
   /** GetResult implicit for fetching ChallengeRow objects using plain SQL queries */
-  implicit def GetResultChallengeRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Long], e3: GR[Boolean], e4: GR[Option[Int]]): GR[ChallengeRow] = GR{
+  implicit def GetResultChallengeRow(implicit e0: GR[Int], e1: GR[String], e2: GR[java.sql.Timestamp], e3: GR[Boolean], e4: GR[Option[Int]]): GR[ChallengeRow] = GR{
     prs => import prs._
-    ChallengeRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<[Long], <<[String], <<[Boolean], <<?[Int], <<?[Int]))
+    ChallengeRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<[java.sql.Timestamp], <<[String], <<[Boolean], <<?[Int], <<?[Int]))
   }
   /** Table description of table challenge. Objects of this class serve as prototypes for rows in queries. */
   class Challenge(_tableTag: Tag) extends profile.api.Table[ChallengeRow](_tableTag, None, "challenge") {
@@ -158,8 +158,8 @@ trait Tables {
     val description: Rep[String] = column[String]("description", O.Length(1024,varying=true))
     /** Database column image SqlType(VARCHAR), Length(191,true) */
     val image: Rep[String] = column[String]("image", O.Length(191,varying=true))
-    /** Database column created SqlType(BIGINT), Default(0) */
-    val created: Rep[Long] = column[Long]("created", O.Default(0L))
+    /** Database column created SqlType(TIMESTAMP) */
+    val created: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created")
     /** Database column creator SqlType(VARCHAR), Length(191,true) */
     val creator: Rep[String] = column[String]("creator", O.Length(191,varying=true))
     /** Database column validated SqlType(BIT) */

@@ -2,6 +2,7 @@ package net.mindlevel.routes
 
 import java.io.File
 import java.nio.file.Paths
+import java.sql.Timestamp
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.Multipart.FormData.BodyPart
@@ -9,6 +10,7 @@ import akka.http.scaladsl.model.{Multipart, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling.Unmarshal
+
 import scala.concurrent.duration._
 import akka.stream.scaladsl.FileIO
 import net.mindlevel.S3Util
@@ -65,7 +67,7 @@ object ChallengeRoute extends AbstractRoute {
                         Unmarshal(parts("challenge")).to[ChallengeRow].map { challengeRow =>
                           challengeRow.copy(
                             image = parts("image"),
-                            created = now(),
+                            created = new Timestamp(now()),
                             creator = username,
                             validated = false,
                             levelRestriction = None,
