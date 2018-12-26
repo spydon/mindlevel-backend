@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`user` (
   `image` VARCHAR(191) NULL DEFAULT 'user.jpg',
   `score` INT DEFAULT '0',
   `level` INT DEFAULT '0',
-  `created` BIGINT NOT NULL,
+  `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `last_active` BIGINT,
   PRIMARY KEY (`username`))
 ENGINE = InnoDB;
@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`challenge` (
   `title` VARCHAR(191) NOT NULL,
   `description` VARCHAR(1024) NOT NULL,
   `image` VARCHAR(191) NOT NULL,
-  `created` BIGINT NOT NULL DEFAULT 0,
+  `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `creator` VARCHAR(191) NOT NULL,
   `validated` TINYINT(1) NOT NULL,
   `level_restriction` INT DEFAULT 0,
@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`accomplishment` (
   `image` VARCHAR(191) NOT NULL,
   `challenge_id` INT NOT NULL,
   `score` INT NOT NULL DEFAULT 0,
-  `created` BIGINT,
+  `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `level_restriction` INT DEFAULT 0,
   `score_restriction` INT DEFAULT 0,
   PRIMARY KEY (`id`),
@@ -182,7 +182,8 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `mindlevel`.`accomplishment_like` (
   `username` VARCHAR(191) NOT NULL,
   `accomplishment_id` INT NOT NULL,
-  `created` BIGINT NOT NULL,
+  `level_restriction` INT DEFAULT 0,
+  `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `score` INT NOT NULL,
   PRIMARY KEY (`username`, `accomplishment_id`),
   INDEX `fk_accomplishment_like_2_idx` (`accomplishment_id` ASC),
