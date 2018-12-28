@@ -36,6 +36,39 @@ VALUES (
 "Fika is a Swedish word for \"a coffee/tea and cake break\" and it is also a lot about socializing.\nSo invite a friend (or stranger) to a vegan fika, you don't have to make the fika yourself but if you want to I can recommend this recipe which the picture is from: https://www.silviacooks.org/nutella-strawberries-tart/",
 "v4_fika.jpg", "Community", True, 4);
 
+INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
+VALUES (
+"Lawn mower",
+"Sometimes people like to make fun of vegans so it is good to have a bit of self distance.\nIn this challenge find a joke or a meme and realize it in a picture.\nFor example with this picture which is connected to the joke \"That moment when your steak is on the grill and you feel your mouth watering.\n\nDo vegans feel the same way when mowing their lawn?\".",
+"v5_wheelbarrow.jpg", "Community", True, 5);
+
+INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
+VALUES (
+"Documentary",
+"Watch a documentary about veganism. Examples are Cowspiracy, Forks over Knifes, Earthlings, What The Health, Maximum Tolerated Dose, Live and Let Live or The Ghosts in Our Machine",
+"v6_documentary.jpg", "Community", True, 6);
+
+INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
+VALUES (
+"Daily Change",
+"When you need to buy a new daily product, buy a vegan one.\nFor example toothpaste, shampoo, make-up, glue, washing liquid or something similar.",
+"v7_daily.jpg", "Community", True, 7);
+
+INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
+VALUES (
+"Creative Food",
+"Create your own vegan dish, be crazy and creative.\nDon't forget to write down the recipe meanwhile you do it, if it actually turns out alright!",
+"v8_creative.jpg", "Community", True, 8);
+
+INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
+VALUES (
+"Protein Master",
+"It is quite common to get the question \"But where do you get your protein from?!\" as a vegan, so this challenge is about collecting some facts.\nFind a few ingredients with a lot of protein and write down in the description how much protein they have per 100g.\n\n(Hint: it is not hard to get your daily protein, you usually don't even have to think about it)",
+"v9_protein.jpg", "Community", True, 9);
+
+# Shoes, Upcycle, ask local food store for vegan product, make tempeh, make vegan milk, make cheese
+# spaghetti etc, Find protein source, Make parents or relatives food, Fool somebody that mostly eats meat
+
 INSERT INTO category (name, image)
 VALUES
 ("Simple", "category_simple.jpg");
