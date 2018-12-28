@@ -15,7 +15,7 @@ UPDATE challenge SET id = 0 WHERE title = "Selfie Tutorial";
 INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
 VALUES (
 "Grass Breakfast?!",
-"Simply make a vegan breakfast.\nIt is easy once you know how to, but in a lot of countries breakfasts are bases around dairy, sausages and eggs.\nExample recipe: https://www.silviacooks.org/guacamole/",
+"Simply make a vegan breakfast.\nIt is easy once you know how to, but in a lot of countries breakfasts are based around dairy, sausages and eggs.\nExample recipe: https://www.silviacooks.org/guacamole/",
 "v1_breakfast.jpg", "Community", True, 1);
 
 INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
