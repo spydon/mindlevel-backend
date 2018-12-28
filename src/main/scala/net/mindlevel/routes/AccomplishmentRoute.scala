@@ -76,7 +76,7 @@ object AccomplishmentRoute extends AbstractRoute {
 
                       val contributorsF = allParts.flatMap { parts =>
                         Unmarshal(parts("contributors")).to[Contributors].map(_.contributors)
-                      }
+                      } map { usernames => (username :: usernames).toSet }
 
                       def updateLevelCount(username: String): Future[Int] = {
                         val user = for {u <- User if u.username === username} yield u.level
@@ -102,14 +102,12 @@ object AccomplishmentRoute extends AbstractRoute {
                           }
 
                           onSuccess(contributorsF) { contributors =>
-                            val creatorAccomplishmentRow = UserAccomplishmentRow(username, accomplishment.id)
                             val contributorRows =
                               contributors.map { contributor =>
                                 UserAccomplishmentRow(username = contributor, accomplishmentId = accomplishment.id)
                               }
                             // TODO: Contributors need to be checked whether or not they are allowed to finish the challenge
-                            val contributorSet = (creatorAccomplishmentRow :: contributorRows).toSet
-                            onSuccess(db.run(UserAccomplishment ++= contributorSet)) { _ =>
+                            onSuccess(db.run(UserAccomplishment ++= contributorRows)) { _ =>
                               contributors.foreach(u => updateLevelCount(u))
                               complete(accomplishment)
                             }
