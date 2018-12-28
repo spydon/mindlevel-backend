@@ -8,15 +8,5 @@ object Routes {
   private val routes = Seq(AccomplishmentRoute, LoginRoute, ChallengeRoute,
                            PingRoute, UserRoute, StatsRoute, CustomRoute)
 
-  object AllRoutes extends AbstractRoute {
-    val route: Route =
-      cors() {
-        optionalHeaderValueByName("X-Integration") { integration =>
-          routes.map( route => {
-            route.setIntegration(integration)
-            route.route
-          }).reduceLeft(_ ~ _)
-        }
-      }
-  }
+  def all: Route = cors() { routes.map(_.route).reduceLeft(_ ~ _) }
 }

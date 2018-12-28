@@ -9,12 +9,14 @@ import slick.jdbc.MySQLProfile.api._
 object PingRoute extends AbstractRoute {
   def route: Route =
     path("ping") {
-      get {
-        val maybeResult = db.run(Challenge.take(1).result.headOption)
+      database { db =>
+        get {
+          val maybeResult = db.run(Challenge.take(1).result.headOption)
 
-        onSuccess(maybeResult) {
-          case Some(_) => complete(StatusCodes.OK)
-          case None => complete(StatusCodes.InternalServerError)
+          onSuccess(maybeResult) {
+            case Some(_) => complete(StatusCodes.OK)
+            case None => complete(StatusCodes.InternalServerError)
+          }
         }
       }
     }

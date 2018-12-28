@@ -8,7 +8,6 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{Directive1, Route}
 import akka.http.scaladsl.server.Directives._
 import com.github.t3hnar.bcrypt._
-import com.typesafe.config.ConfigFactory
 import net.mindlevel.models.Tables._
 import slick.jdbc.MySQLProfile.api._
 import spray.json.DefaultJsonProtocol._
@@ -17,27 +16,20 @@ import spray.json.{DeserializationException, JsNumber, JsValue, JsonFormat}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 
-private object DBSingleton {
-  val default = Database.forConfig("db.default")
-  val custom = Database.forConfig("db.custom")
-  val veglevel = Database.forConfig("db.veglevel")
-  val dbs = Map("default" -> default, "custom" -> custom, "veglevel" -> veglevel)
+private object DBConfig {
+  private val default = Database.forConfig("db.default")
+  private val custom = Database.forConfig("db.custom")
+  private val veglevel = Database.forConfig("db.veglevel")
+  private val dbs = Map("default" -> default, "custom" -> custom, "veglevel" -> veglevel)
 
-  def db(name: String): Database = dbs.getOrElse(name, default)
+  def db(name: Option[String]): Database = {
+    val integration = name.getOrElse("")
+    dbs.getOrElse(integration, default)
+  }
 }
 
 trait AbstractRoute {
   def route: Route
-  private var integration: String = "default"
-  private val conf = ConfigFactory.load()
-
-  def setIntegration(integration: Option[String]) = {
-    this.integration = integration.getOrElse(conf.getString("db.defaultDb"))
-  }
-
-  protected def db: Database = {
-    DBSingleton.db(integration)
-  }
 
   protected val accomplishmentPageSize = 20
   protected val challengePageSize = 20
@@ -90,28 +82,37 @@ trait AbstractRoute {
   protected case class AuthException(msg: String) extends IllegalAccessException(msg)
 
   protected def sessionId: Directive1[String] = {
-    def isSessionValid(session: String): Boolean = {
-      updateLastActiveSession(session)
+    def isSessionValid(db: Database, session: String): Boolean = {
+      updateLastActiveSession(db, session)
       import scala.concurrent.duration._
       // TODO: This is going to slow down the backend, refactor
-      Await.result(nameFromSession(session), 10.second).isDefined
+      Await.result(nameFromSession(db, session), 10.second).isDefined
     }
 
-    optionalHeaderValueByName("X-Session").flatMap {
-      case Some(session) if isSessionValid(session) =>
-        provide(session)
-      case Some(_) =>
-        complete(StatusCodes.Unauthorized -> "Session not valid, most likely expired.")
-      case None =>
-        complete(StatusCodes.Unauthorized -> "Session not provided")
+    optionalHeaderValueByName("X-Integration") flatMap { maybeIntegration =>
+      val db = DBConfig.db(maybeIntegration)
+      optionalHeaderValueByName("X-Session") flatMap {
+        case Some(session) if isSessionValid(db, session) =>
+          provide(session)
+        case Some(_) =>
+          complete(StatusCodes.Unauthorized -> "Session not valid, most likely expired.")
+        case None =>
+          complete(StatusCodes.Unauthorized -> "Session not provided")
+      }
     }
   }
 
-  protected def nameFromSession(session: String): Future[Option[String]] = {
+  protected def database: Directive1[Database] = {
+    optionalHeaderValueByName("X-Integration") flatMap { maybeIntegration =>
+      provide(DBConfig.db(maybeIntegration))
+    }
+  }
+
+  protected def nameFromSession(db: Database, session: String): Future[Option[String]] = {
     db.run(Session.filter(_.session === session).map(_.username).result.headOption)
   }
 
-  protected def userFromSession(session: String): Future[UserRow] = {
+  protected def userFromSession(db: Database, session: String): Future[UserRow] = {
     val query = for {
       s <- Session if s.session === session
       u <- User if u.username === s.username
@@ -119,12 +120,12 @@ trait AbstractRoute {
     db.run(query.result.head)
   }
 
-  protected def isAuthorized(username: String, session: String): Future[Boolean] = {
+  protected def isAuthorized(db: Database, username: String, session: String): Future[Boolean] = {
     db.run(Session.filter(s => s.username === username && s.session === session).exists.result)
   }
 
-  protected def isAuthorizedToAccomplishment(accomplishmentId: Int, session: String): Future[Boolean] = {
-    val maybeUsername = nameFromSession(session)
+  protected def isAuthorizedToAccomplishment(db: Database, accomplishmentId: Int, session: String): Future[Boolean] = {
+    val maybeUsername = nameFromSession(db, session)
     maybeUsername.flatMap {
       case Some(username) =>
         db.run(UserAccomplishment
@@ -135,8 +136,8 @@ trait AbstractRoute {
     }
   }
 
-  protected def isAuthorizedToChallenge(challengeId: Int, session: String): Future[Boolean] = {
-    val maybeUser = nameFromSession(session)
+  protected def isAuthorizedToChallenge(db: Database, challengeId: Int, session: String): Future[Boolean] = {
+    val maybeUser = nameFromSession(db, session)
     maybeUser.flatMap {
       case Some(username) =>
           db.run(Challenge
@@ -147,13 +148,13 @@ trait AbstractRoute {
     }
   }
 
-  protected def updateLastActiveSession(session: String): Future[Boolean] = {
-    userFromSession(session) flatMap { user =>
-      updateLastActive(user.username)
+  protected def updateLastActiveSession(db: Database, session: String): Future[Boolean] = {
+    userFromSession(db, session) flatMap { user =>
+      updateLastActive(db, user.username)
     }
   }
 
-  protected def updateLastActive(username: String): Future[Boolean] = {
+  protected def updateLastActive(db: Database, username: String): Future[Boolean] = {
     // Usually just fire and forget also not secured so only call from a secure context
     val now = Some(Instant.now.getEpochSecond)
     val q = for (u <- User if u.username === username) yield u.lastActive
@@ -164,7 +165,7 @@ trait AbstractRoute {
     }
   }
 
-  protected def updatePassword(user: LoginFormat): Future[String] = {
+  protected def updatePassword(db: Database, user: LoginFormat): Future[String] = {
     val q = for {
       u <- UserExtra if u.username === user.username
       s <- Session if u.username === s.username
@@ -178,7 +179,7 @@ trait AbstractRoute {
           case (username, password, session) =>
             if (user.session == session && user.password.getOrElse("").isBcrypted(password)) {
               val q = for (u <- UserExtra if u.username === username) yield u.password
-              updateSession(user) flatMap {
+              updateSession(db, user) flatMap {
                 case Some(newSession) =>
                   user.newPassword match {
                     case Some(newPassword) =>
@@ -205,7 +206,7 @@ trait AbstractRoute {
     }
   }
 
-  protected def updateSession(user: LoginFormat, logout: Boolean = false): Future[Option[String]] = {
+  protected def updateSession(db: Database, user: LoginFormat, logout: Boolean = false): Future[Option[String]] = {
     val q = for {
       u <- UserExtra if u.username === user.username
       s <- Session if u.username === s.username
@@ -221,7 +222,7 @@ trait AbstractRoute {
               val currentSession = for (s <- Session if s.username === username) yield s.session
               val newSession = if (logout) None else Some(UUID.randomUUID().toString)
               val maybeUpdated = db.run(currentSession.update(newSession))
-              updateLastActive(username)
+              updateLastActive(db, username)
               maybeUpdated.map {
                 case 1 => newSession
                 case _ => throw AuthException(s"Could not update the session")
@@ -236,7 +237,7 @@ trait AbstractRoute {
     }
   }
 
-  protected def customDbExists(pass: String): Future[Boolean] = {
+  protected def customDbExists(db: Database, pass: String): Future[Boolean] = {
     db.run(CustomDb.filter(_.pass === pass).exists.result)
   }
 }

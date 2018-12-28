@@ -8,21 +8,25 @@ import akka.http.scaladsl.server.Route
 object LoginRoute extends AbstractRoute {
   def route: Route =
     path("login") {
-      post {
-        entity(as[LoginFormat]) { login =>
-          onSuccess(updateSession(login)) {
-            case Some(session) => complete(session)
-            case None => complete(StatusCodes.Unauthorized)
+      database { db =>
+        post {
+          entity(as[LoginFormat]) { login =>
+            onSuccess(updateSession(db, login)) {
+              case Some(session) => complete(session)
+              case None => complete(StatusCodes.Unauthorized)
+            }
           }
         }
       }
     } ~
       path("logout") {
-        post {
-          entity(as[LoginFormat]) { login =>
-            onSuccess(updateSession(login, true)) {
-              case None => complete(StatusCodes.OK)
-              case _ => complete(StatusCodes.InternalServerError)
+        database { db =>
+          post {
+            entity(as[LoginFormat]) { login =>
+              onSuccess(updateSession(db, login, true)) {
+                case None => complete(StatusCodes.OK)
+                case _ => complete(StatusCodes.InternalServerError)
+              }
             }
           }
         }
