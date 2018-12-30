@@ -10,8 +10,6 @@ VALUES (
 "This is the first challenge of VegLevel, it will set your profile picture. Don't worry you can change it later.",
 "v0_selfie.jpg", "Community", True, 0);
 
-UPDATE challenge SET id = 0 WHERE title = "Selfie Tutorial";
-
 INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
 VALUES (
 "Grass Breakfast?!",
@@ -66,6 +64,12 @@ VALUES (
 "It is quite common to get the question \"But where do you get your protein from?!\" as a vegan, so this challenge is about collecting some facts.\nFind a few ingredients with a lot of protein and write down in the description how much protein they have per 100g.\n\n(Hint: it is not hard to get your daily protein, you usually don't even have to think about it)",
 "v9_protein.jpg", "Community", True, 9);
 
+INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
+VALUES (
+"Relatively Vego",
+"Cook a vegan dish for a parent or a relative.",
+"v10_relative.jpg", "Community", True, 10);
+
 # Shoes, Upcycle, ask local food store for vegan product, make tempeh, make vegan milk, make cheese
 # spaghetti etc, Find protein source, Make parents or relatives food, Fool somebody that mostly eats meat
 
@@ -83,8 +87,14 @@ VALUES
 
 INSERT INTO challenge_category (challenge_id, category_id)
 VALUES
-(1, 1),
 (2, 1),
-(3, 2),
-(4, 1),
-(0, 1);
+(3, 1),
+(4, 2),
+(5, 1),
+(6, 3),
+(7, 3),
+(8, 1),
+(9, 2),
+(10, 1),
+(11, 2),
+(1, 1);
