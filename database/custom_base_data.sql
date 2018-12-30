@@ -10,8 +10,6 @@ VALUES (
 "This is the first challenge of MindLevel, it will set your profile picture. Don't worry you can change it later.",
 "0_selfie.jpg", "Community", True);
 
-UPDATE challenge SET id = 0 WHERE title = "Selfie Tutorial";
-
 INSERT INTO category (name, image)
 VALUES
 ("Simple", "category_simple.jpg");
@@ -26,4 +24,4 @@ VALUES
 
 INSERT INTO challenge_category (challenge_id, category_id)
 VALUES
-(0, 1);
+(1, 1);
