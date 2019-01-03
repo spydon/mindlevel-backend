@@ -161,7 +161,7 @@ object AccomplishmentRoute extends AbstractRoute {
                 }
               } ~
                 path("like") {
-                  get {
+                  get { // TODO: Should be POST or PUT
                     onSuccess(nameFromSession(db, session)) {
                       case None =>
                         complete(StatusCodes.Unauthorized)
@@ -198,11 +198,13 @@ object AccomplishmentRoute extends AbstractRoute {
                               SET u.score = u.score + $scoreValue, a.score = a.score + $scoreValue
                               WHERE a.id = $id"""
 
-                              // Fire and forget, significant race? (Can be recounted from accomplishment_like)
-                              db.run(updateScore)
-                              scoreResponse(true)
+                              onSuccess(db.run(updateScore)) {
+                                case 0 => scoreResponse(false)
+                                case _ => scoreResponse(true)
+                              }
                             case _ =>
-                              scoreResponse(false) // Already liked or user does not have 1 accomplishment yet
+                              // Already liked or user does not have 1 accomplishment yet
+                              scoreResponse(false)
                           }
                         }
                     }

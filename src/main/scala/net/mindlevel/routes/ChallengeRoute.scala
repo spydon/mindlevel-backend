@@ -68,7 +68,7 @@ object ChallengeRoute extends AbstractRoute {
                           Unmarshal(parts("challenge")).to[ChallengeRow].map { challengeRow =>
                             challengeRow.copy(
                               image = parts("image"),
-                              created = new Timestamp(now()),
+                              created = null,
                               creator = username,
                               validated = false,
                               levelRestriction = None,
