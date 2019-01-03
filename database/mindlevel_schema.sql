@@ -141,8 +141,8 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`accomplishment` (
   `challenge_id` INT NOT NULL,
   `score` INT NOT NULL DEFAULT 0,
   `created` BIGINT,
-  `level_restriction` INT DEFAULT 0,
-  `score_restriction` INT DEFAULT 0,
+  `level_restriction` INT NOT NULL DEFAULT 0,
+  `score_restriction` INT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   INDEX `fk_accomplishment_challenge_idx` (`challenge_id` ASC),
   CONSTRAINT `fk_accomplishment_challenge`
