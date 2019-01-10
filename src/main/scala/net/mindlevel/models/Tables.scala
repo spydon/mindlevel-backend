@@ -14,7 +14,7 @@ trait Tables {
   import slick.jdbc.{GetResult => GR}
 
   /** DDL for all tables. Call .create to execute. */
-  lazy val schema: profile.SchemaDescription = Array(Accomplishment.schema, AccomplishmentLike.schema, Category.schema, Challenge.schema, ChallengeCategory.schema, CustomDb.schema, Session.schema, User.schema, UserAccomplishment.schema, UserExtra.schema).reduceLeft(_ ++ _)
+  lazy val schema: profile.SchemaDescription = Array(Accomplishment.schema, AccomplishmentLike.schema, Category.schema, Challenge.schema, ChallengeCategory.schema, CustomDb.schema, Notification.schema, NotificationTarget.schema, NotificationUser.schema, Session.schema, User.schema, UserAccomplishment.schema, UserExtra.schema).reduceLeft(_ ++ _)
   @deprecated("Use .schema instead of .ddl", "3.0")
   def ddl = schema
 
@@ -26,19 +26,19 @@ trait Tables {
    *  @param challengeId Database column challenge_id SqlType(INT)
    *  @param score Database column score SqlType(INT), Default(0)
    *  @param created Database column created SqlType(BIGINT), Default(None)
-   *  @param levelRestriction Database column level_restriction SqlType(INT), Default(Some(0))
-   *  @param scoreRestriction Database column score_restriction SqlType(INT), Default(Some(0)) */
-  case class AccomplishmentRow(id: Int, title: String, description: String, image: String, challengeId: Int, score: Int = 0, created: Option[Long] = None, levelRestriction: Option[Int] = Some(0), scoreRestriction: Option[Int] = Some(0))
+   *  @param levelRestriction Database column level_restriction SqlType(INT), Default(0)
+   *  @param scoreRestriction Database column score_restriction SqlType(INT), Default(0) */
+  case class AccomplishmentRow(id: Int, title: String, description: String, image: String, challengeId: Int, score: Int = 0, created: Option[Long] = None, levelRestriction: Int = 0, scoreRestriction: Int = 0)
   /** GetResult implicit for fetching AccomplishmentRow objects using plain SQL queries */
-  implicit def GetResultAccomplishmentRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Option[Long]], e3: GR[Option[Int]]): GR[AccomplishmentRow] = GR{
+  implicit def GetResultAccomplishmentRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Option[Long]]): GR[AccomplishmentRow] = GR{
     prs => import prs._
-    AccomplishmentRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<[Int], <<[Int], <<?[Long], <<?[Int], <<?[Int]))
+    AccomplishmentRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<[Int], <<[Int], <<?[Long], <<[Int], <<[Int]))
   }
   /** Table description of table accomplishment. Objects of this class serve as prototypes for rows in queries. */
   class Accomplishment(_tableTag: Tag) extends profile.api.Table[AccomplishmentRow](_tableTag, None, "accomplishment") {
     def * = (id, title, description, image, challengeId, score, created, levelRestriction, scoreRestriction) <> (AccomplishmentRow.tupled, AccomplishmentRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(title), Rep.Some(description), Rep.Some(image), Rep.Some(challengeId), Rep.Some(score), created, levelRestriction, scoreRestriction).shaped.<>({r=>import r._; _1.map(_=> AccomplishmentRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7, _8, _9)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(title), Rep.Some(description), Rep.Some(image), Rep.Some(challengeId), Rep.Some(score), created, Rep.Some(levelRestriction), Rep.Some(scoreRestriction)).shaped.<>({r=>import r._; _1.map(_=> AccomplishmentRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7, _8.get, _9.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(INT), AutoInc, PrimaryKey */
     val id: Rep[Int] = column[Int]("id", O.AutoInc, O.PrimaryKey)
@@ -54,10 +54,10 @@ trait Tables {
     val score: Rep[Int] = column[Int]("score", O.Default(0))
     /** Database column created SqlType(BIGINT), Default(None) */
     val created: Rep[Option[Long]] = column[Option[Long]]("created", O.Default(None))
-    /** Database column level_restriction SqlType(INT), Default(Some(0)) */
-    val levelRestriction: Rep[Option[Int]] = column[Option[Int]]("level_restriction", O.Default(Some(0)))
-    /** Database column score_restriction SqlType(INT), Default(Some(0)) */
-    val scoreRestriction: Rep[Option[Int]] = column[Option[Int]]("score_restriction", O.Default(Some(0)))
+    /** Database column level_restriction SqlType(INT), Default(0) */
+    val levelRestriction: Rep[Int] = column[Int]("level_restriction", O.Default(0))
+    /** Database column score_restriction SqlType(INT), Default(0) */
+    val scoreRestriction: Rep[Int] = column[Int]("score_restriction", O.Default(0))
 
     /** Foreign key referencing Challenge (database name fk_accomplishment_challenge) */
     lazy val challengeFk = foreignKey("fk_accomplishment_challenge", challengeId, Challenge)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
@@ -231,6 +231,107 @@ trait Tables {
   }
   /** Collection-like TableQuery object for table CustomDb */
   lazy val CustomDb = new TableQuery(tag => new CustomDb(tag))
+
+  /** Entity class storing rows of table Notification
+   *  @param id Database column id SqlType(INT), AutoInc, PrimaryKey
+   *  @param title Database column title SqlType(VARCHAR), Length(191,true)
+   *  @param description Database column description SqlType(VARCHAR), Length(1024,true)
+   *  @param image Database column image SqlType(VARCHAR), Length(191,true)
+   *  @param created Database column created SqlType(TIMESTAMP)
+   *  @param priority Database column priority SqlType(INT), Default(Some(0))
+   *  @param targetId Database column target_id SqlType(INT), Default(Some(0)) */
+  case class NotificationRow(id: Int, title: String, description: String, image: String, created: java.sql.Timestamp, priority: Option[Int] = Some(0), targetId: Option[Int] = Some(0))
+  /** GetResult implicit for fetching NotificationRow objects using plain SQL queries */
+  implicit def GetResultNotificationRow(implicit e0: GR[Int], e1: GR[String], e2: GR[java.sql.Timestamp], e3: GR[Option[Int]]): GR[NotificationRow] = GR{
+    prs => import prs._
+    NotificationRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<[java.sql.Timestamp], <<?[Int], <<?[Int]))
+  }
+  /** Table description of table notification. Objects of this class serve as prototypes for rows in queries. */
+  class Notification(_tableTag: Tag) extends profile.api.Table[NotificationRow](_tableTag, None, "notification") {
+    def * = (id, title, description, image, created, priority, targetId) <> (NotificationRow.tupled, NotificationRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (Rep.Some(id), Rep.Some(title), Rep.Some(description), Rep.Some(image), Rep.Some(created), priority, targetId).shaped.<>({r=>import r._; _1.map(_=> NotificationRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6, _7)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column id SqlType(INT), AutoInc, PrimaryKey */
+    val id: Rep[Int] = column[Int]("id", O.AutoInc, O.PrimaryKey)
+    /** Database column title SqlType(VARCHAR), Length(191,true) */
+    val title: Rep[String] = column[String]("title", O.Length(191,varying=true))
+    /** Database column description SqlType(VARCHAR), Length(1024,true) */
+    val description: Rep[String] = column[String]("description", O.Length(1024,varying=true))
+    /** Database column image SqlType(VARCHAR), Length(191,true) */
+    val image: Rep[String] = column[String]("image", O.Length(191,varying=true))
+    /** Database column created SqlType(TIMESTAMP) */
+    val created: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created")
+    /** Database column priority SqlType(INT), Default(Some(0)) */
+    val priority: Rep[Option[Int]] = column[Option[Int]]("priority", O.Default(Some(0)))
+    /** Database column target_id SqlType(INT), Default(Some(0)) */
+    val targetId: Rep[Option[Int]] = column[Option[Int]]("target_id", O.Default(Some(0)))
+
+    /** Foreign key referencing NotificationTarget (database name fk_notification_target) */
+    lazy val notificationTargetFk = foreignKey("fk_notification_target", id, NotificationTarget)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+
+    /** Index over (targetId) (database name fk_notification_target_idx) */
+    val index1 = index("fk_notification_target_idx", targetId)
+  }
+  /** Collection-like TableQuery object for table Notification */
+  lazy val Notification = new TableQuery(tag => new Notification(tag))
+
+  /** Entity class storing rows of table NotificationTarget
+   *  @param id Database column id SqlType(INT), PrimaryKey
+   *  @param name Database column name SqlType(VARCHAR), Length(191,true) */
+  case class NotificationTargetRow(id: Int, name: String)
+  /** GetResult implicit for fetching NotificationTargetRow objects using plain SQL queries */
+  implicit def GetResultNotificationTargetRow(implicit e0: GR[Int], e1: GR[String]): GR[NotificationTargetRow] = GR{
+    prs => import prs._
+    NotificationTargetRow.tupled((<<[Int], <<[String]))
+  }
+  /** Table description of table notification_target. Objects of this class serve as prototypes for rows in queries. */
+  class NotificationTarget(_tableTag: Tag) extends profile.api.Table[NotificationTargetRow](_tableTag, None, "notification_target") {
+    def * = (id, name) <> (NotificationTargetRow.tupled, NotificationTargetRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (Rep.Some(id), Rep.Some(name)).shaped.<>({r=>import r._; _1.map(_=> NotificationTargetRow.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column id SqlType(INT), PrimaryKey */
+    val id: Rep[Int] = column[Int]("id", O.PrimaryKey)
+    /** Database column name SqlType(VARCHAR), Length(191,true) */
+    val name: Rep[String] = column[String]("name", O.Length(191,varying=true))
+  }
+  /** Collection-like TableQuery object for table NotificationTarget */
+  lazy val NotificationTarget = new TableQuery(tag => new NotificationTarget(tag))
+
+  /** Entity class storing rows of table NotificationUser
+   *  @param notificationId Database column notification_id SqlType(INT)
+   *  @param username Database column username SqlType(VARCHAR), Length(191,true)
+   *  @param seen Database column seen SqlType(BIT), Default(false) */
+  case class NotificationUserRow(notificationId: Int, username: String, seen: Boolean = false)
+  /** GetResult implicit for fetching NotificationUserRow objects using plain SQL queries */
+  implicit def GetResultNotificationUserRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Boolean]): GR[NotificationUserRow] = GR{
+    prs => import prs._
+    NotificationUserRow.tupled((<<[Int], <<[String], <<[Boolean]))
+  }
+  /** Table description of table notification_user. Objects of this class serve as prototypes for rows in queries. */
+  class NotificationUser(_tableTag: Tag) extends profile.api.Table[NotificationUserRow](_tableTag, None, "notification_user") {
+    def * = (notificationId, username, seen) <> (NotificationUserRow.tupled, NotificationUserRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (Rep.Some(notificationId), Rep.Some(username), Rep.Some(seen)).shaped.<>({r=>import r._; _1.map(_=> NotificationUserRow.tupled((_1.get, _2.get, _3.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column notification_id SqlType(INT) */
+    val notificationId: Rep[Int] = column[Int]("notification_id")
+    /** Database column username SqlType(VARCHAR), Length(191,true) */
+    val username: Rep[String] = column[String]("username", O.Length(191,varying=true))
+    /** Database column seen SqlType(BIT), Default(false) */
+    val seen: Rep[Boolean] = column[Boolean]("seen", O.Default(false))
+
+    /** Primary key of NotificationUser (database name notification_user_PK) */
+    val pk = primaryKey("notification_user_PK", (notificationId, username))
+
+    /** Foreign key referencing Notification (database name fk_notification_user_1) */
+    lazy val notificationFk = foreignKey("fk_notification_user_1", notificationId, Notification)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+    /** Foreign key referencing User (database name fk_notification_user_2) */
+    lazy val userFk = foreignKey("fk_notification_user_2", username, User)(r => r.username, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  }
+  /** Collection-like TableQuery object for table NotificationUser */
+  lazy val NotificationUser = new TableQuery(tag => new NotificationUser(tag))
 
   /** Entity class storing rows of table Session
    *  @param username Database column username SqlType(VARCHAR), PrimaryKey, Length(191,true)

@@ -226,6 +226,7 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `veglevel`.`notification_user` (
   `notification_id` INT NOT NULL,
   `username` VARCHAR(191) NOT NULL,
+  `seen` TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`notification_id`, `username`),
   INDEX `fk_notification_user_idx` (`username` ASC),
   CONSTRAINT `fk_notification_user_1`
