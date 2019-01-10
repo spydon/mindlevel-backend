@@ -24,7 +24,7 @@ private object DBConfig {
 
   def db(name: Option[String]): Database = {
     val integration = name.getOrElse("")
-    dbs.getOrElse(integration, default)
+    dbs.getOrElse(integration, veglevel)
   }
 }
 
