@@ -198,6 +198,57 @@ CREATE TABLE IF NOT EXISTS `custom`.`accomplishment_like` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
+-- -----------------------------------------------------
+-- Table `custom`.`notification`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `custom`.`notification` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `title` VARCHAR(191) NOT NULL,
+  `description` VARCHAR(1024) NOT NULL,
+  `image` VARCHAR(191) NOT NULL,
+  `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `priority` INT DEFAULT 0,
+  `target_id` INT DEFAULT 0,
+  PRIMARY KEY (`id`),
+  INDEX `fk_notification_target_idx` (`target_id` ASC),
+  CONSTRAINT `fk_notification_target`
+    FOREIGN KEY (`id`)
+    REFERENCES `custom`.`notification_target` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `custom`.`notification_user`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `custom`.`notification_user` (
+  `notification_id` INT NOT NULL,
+  `username` VARCHAR(191) NOT NULL,
+  PRIMARY KEY (`notification_id`, `username`),
+  INDEX `fk_notification_user_idx` (`username` ASC),
+  CONSTRAINT `fk_notification_user_1`
+    FOREIGN KEY (`notification_id`)
+    REFERENCES `custom`.`notification` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_notification_user_2`
+    FOREIGN KEY (`username`)
+    REFERENCES `custom`.`user` (`username`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `custom`.`notification_target`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `custom`.`notification_target` (
+  `id` INT NOT NULL,
+  `name` VARCHAR(191) NOT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
 
 -- -----------------------------------------------------
 -- Table `custom`.`custom_db`
