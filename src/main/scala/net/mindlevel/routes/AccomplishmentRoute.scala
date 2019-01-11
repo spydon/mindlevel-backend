@@ -63,13 +63,13 @@ object AccomplishmentRoute extends AbstractRoute {
                       // should take the level restriction of the challenge
                       val row = allParts.flatMap { parts =>
                         Unmarshal(parts("accomplishment")).to[AccomplishmentRow].map { accomplishmentRow =>
-                          val level = Some(accomplishmentRow.levelRestriction.getOrElse(0))
+                          val level = accomplishmentRow.levelRestriction
                           accomplishmentRow.copy(
                             image = parts("image"),
                             score = 0,
                             created = Some(now()),
                             levelRestriction = level,
-                            scoreRestriction = Some(0)
+                            scoreRestriction = 0
                           )
                         }
                       }

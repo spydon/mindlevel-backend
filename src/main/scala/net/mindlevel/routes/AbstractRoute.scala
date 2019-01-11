@@ -77,6 +77,7 @@ trait AbstractRoute {
   protected implicit val likeResponseFormat = jsonFormat2(LikeResponse)
   protected implicit val contributorsFormat = jsonFormat1(Contributors)
   protected implicit val countFormat = jsonFormat1(Count)
+  protected implicit val notificationFormat = jsonFormat7(NotificationRow)
   protected implicit val customDbFormat = jsonFormat3(CustomDbRow)
 
   protected case class AuthException(msg: String) extends IllegalAccessException(msg)

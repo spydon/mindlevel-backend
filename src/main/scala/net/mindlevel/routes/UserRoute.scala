@@ -201,6 +201,38 @@ object UserRoute extends AbstractRoute {
                     ).result)
                     complete(accomplishments)
                   }
+                } ~
+                pathPrefix("notification") {
+                  pathEndOrSingleSlash {
+                    get {
+                      val innerJoin = for {
+                        (_, n) <-
+                          NotificationUser.filter(nu => nu.username === username && !nu.seen) join Notification on (_.notificationId === _.id)
+                      } yield n
+
+                      onSuccess(db.run(innerJoin.result)) { notifications =>
+                        complete(notifications)
+                      }
+                    }
+                  } ~
+                    path(IntNumber) { notificationId =>
+                      delete {
+                        val isUpdated = isAuthorized(db, username, session) map {
+                          case true =>
+                            val q = for {
+                              nu <- NotificationUser if nu.username === username && nu.notificationId === notificationId
+                            } yield nu.seen
+                            val maybeUpdated = db.run(q.update(true))
+                            onSuccess(maybeUpdated) {
+                              case 0 => complete(StatusCodes.NotFound)
+                              case _ => complete(StatusCodes.OK)
+                            }
+                          case false =>
+                            complete(StatusCodes.Unauthorized)
+                        }
+                        onSuccess(isUpdated)(result => result)
+                      }
+                    }
                 }
             }
           }

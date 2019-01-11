@@ -206,14 +206,14 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`notification` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `title` VARCHAR(191) NOT NULL,
   `description` VARCHAR(1024) NOT NULL,
-  `image` VARCHAR(191) NOT NULL,
+  `image` VARCHAR(191) DEFAULT NULL,
   `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `priority` INT DEFAULT 0,
   `target_id` INT DEFAULT 0,
   PRIMARY KEY (`id`),
   INDEX `fk_notification_target_idx` (`target_id` ASC),
   CONSTRAINT `fk_notification_target`
-    FOREIGN KEY (`id`)
+    FOREIGN KEY (`target_id`)
     REFERENCES `mindlevel`.`notification_target` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)

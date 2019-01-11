@@ -28,8 +28,8 @@ CREATE TABLE IF NOT EXISTS `custom`.`user` (
   `username` VARCHAR(191) NOT NULL,
   `description` VARCHAR(1024) NULL,
   `image` VARCHAR(191) NULL DEFAULT 'user.jpg',
-  `score` INT NOT NULL,
-  `level` INT NOT NULL,
+  `score` INT DEFAULT '0',
+  `level` INT DEFAULT '0',
   `created` BIGINT NOT NULL,
   `last_active` BIGINT,
   PRIMARY KEY (`username`))
@@ -80,11 +80,11 @@ CREATE TABLE IF NOT EXISTS `custom`.`challenge` (
   `title` VARCHAR(191) NOT NULL,
   `description` VARCHAR(1024) NOT NULL,
   `image` VARCHAR(191) NOT NULL,
-  `created` BIGINT NOT NULL DEFAULT 0,
+  `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `creator` VARCHAR(191) NOT NULL,
   `validated` TINYINT(1) NOT NULL,
-  `level_restriction` INT NOT NULL DEFAULT 0,
-  `score_restriction` INT NOT NULL DEFAULT 0,
+  `level_restriction` INT DEFAULT 0,
+  `score_restriction` INT DEFAULT 0,
   PRIMARY KEY (`id`),
   INDEX `fk_challenge_user_idx` (`creator` ASC),
   CONSTRAINT `fk_challenge_user`
@@ -206,15 +206,15 @@ CREATE TABLE IF NOT EXISTS `custom`.`notification` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `title` VARCHAR(191) NOT NULL,
   `description` VARCHAR(1024) NOT NULL,
-  `image` VARCHAR(191) NOT NULL,
+  `image` VARCHAR(191) DEFAULT NULL,
   `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `priority` INT DEFAULT 0,
   `target_id` INT DEFAULT 0,
   PRIMARY KEY (`id`),
   INDEX `fk_notification_target_idx` (`target_id` ASC),
   CONSTRAINT `fk_notification_target`
-    FOREIGN KEY (`id`)
-    REFERENCES `custom`.`notification_target` (`id`)
+    FOREIGN KEY (`target_id`)
+    REFERENCES `mindlevel`.`notification_target` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
