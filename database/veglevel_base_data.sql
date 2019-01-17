@@ -18,6 +18,12 @@ VALUES (
 
 INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
 VALUES (
+"Animalographer",
+"If you don't eat breakfast, this challenge is for you (To get to the next level)! If you do eat breakfast it is fine too...\n\nIt's simple, find an animal and photograph it.",
+"v1_2_animal.jpg", "Community", True, 1);
+
+INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
+VALUES (
 "Speedy Lunch",
 "This challenge is all about speed.\nCook a vegan lunch, but you have a maximum of 30 minutes to do it.\n\nIf you need some inspiration; why not throw some root veggies into the oven and make a sauce to have with it.\nExample recipe: http://www.silviacooks.org/sweet-potatoes-tahini/",
 "v2_lunch.jpg", "Community", True, 2);
@@ -69,6 +75,12 @@ VALUES (
 "Relatively Vego",
 "Cook a vegan dish for a parent or a relative.",
 "v10_relative.jpg", "Community", True, 10);
+
+INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
+VALUES (
+"Dessert (No sand)",
+"Make a dessert and remember to post the recipe in the description!\n\nInspiration: https://www.silviacooks.org/vegan-chocolate-mousse",
+"v10_2_dessert.jpg", "Community", True, 10);
 
 # Shoes, Upcycle, ask local food store for vegan product, make tempeh, make vegan milk, make cheese
 # spaghetti etc, Find protein source, Make parents or relatives food, Fool somebody that mostly eats meat

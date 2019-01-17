@@ -244,7 +244,8 @@ object AccomplishmentRoute extends AbstractRoute {
                   val between = range.split("-")
                   val lower = between(0).toInt
                   val upper = between(1).toInt
-                  val accomplishments = clean(Accomplishment.filter(_.id >= lower).filter(_.id <= upper))
+                  val accomplishments =
+                    clean(Accomplishment.filter(_.id >= lower).filter(_.id <= upper).sortBy(_.created.desc))
                   complete(accomplishments)
                 } else if (range.contains(",")) {
                   val ids = range.split(",").map(_.toInt)

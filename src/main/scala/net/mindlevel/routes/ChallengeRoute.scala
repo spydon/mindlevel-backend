@@ -188,7 +188,7 @@ object ChallengeRoute extends AbstractRoute {
                 } ~
                 path("accomplishment") {
                   get {
-                    val query = Accomplishment.filter(_.challengeId === id)
+                    val query = Accomplishment.filter(_.challengeId === id).sortBy(_.created.desc)
                     complete(AccomplishmentRoute.removeRestricted(db, session)(query))
                   }
                 }

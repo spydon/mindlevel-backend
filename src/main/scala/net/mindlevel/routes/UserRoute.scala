@@ -197,7 +197,7 @@ object UserRoute extends AbstractRoute {
                 path("accomplishment") {
                   get {
                     val accomplishments = db.run(UserAccomplishment.filter(_.username === username).flatMap(ua =>
-                      Accomplishment.filter(_.id === ua.accomplishmentId)
+                      Accomplishment.filter(_.id === ua.accomplishmentId).sortBy(_.created.desc)
                     ).result)
                     complete(accomplishments)
                   }
