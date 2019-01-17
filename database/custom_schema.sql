@@ -214,7 +214,7 @@ CREATE TABLE IF NOT EXISTS `custom`.`notification` (
   INDEX `fk_notification_target_idx` (`target_id` ASC),
   CONSTRAINT `fk_notification_target`
     FOREIGN KEY (`target_id`)
-    REFERENCES `mindlevel`.`notification_target` (`id`)
+    REFERENCES `custom`.`notification_target` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
