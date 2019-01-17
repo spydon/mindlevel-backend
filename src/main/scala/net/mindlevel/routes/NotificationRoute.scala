@@ -50,7 +50,7 @@ object NotificationRoute extends AbstractRoute {
                       val row = allParts.flatMap { parts =>
                         Unmarshal(parts("notification")).to[NotificationRow].map { notificationRow =>
                           notificationRow.copy(
-                            image = parts("image"),
+                            image = Some(parts("image")),
                             created = new Timestamp(now())
                           )
                         }
