@@ -68,7 +68,7 @@ object AccomplishmentRoute extends AbstractRoute {
                             image = parts("image"),
                             score = 0,
                             created = Some(now()),
-                            levelRestriction = level,
+                            levelRestriction = 0, // Show all accomplishments for now, otherwise change to level
                             scoreRestriction = 0
                           )
                         }
