@@ -153,8 +153,14 @@ object ChallengeRoute extends AbstractRoute {
             pathPrefix(IntNumber) { id =>
               pathEndOrSingleSlash {
                 get {
-                  val maybeChallenge = clean(Challenge.filter(_.id === id)).map(_.headOption)
-                  complete(maybeChallenge)
+                  val challengeF = clean(Challenge.filter(_.id === id)).map(_.headOption)
+                  onSuccess(challengeF) { maybeChallenge =>
+                    if (maybeChallenge.isDefined) {
+                      complete(maybeChallenge.get)
+                    } else {
+                      complete(StatusCodes.Forbidden)
+                    }
+                  }
                 }
               } ~
                 path("image") {
