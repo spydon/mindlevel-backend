@@ -271,21 +271,6 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`comment` (
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
--- Table `mindlevel`.`accomplishment_comment`
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS `mindlevel`.`accomplishment_comment` (
-  `accomplishment_id` INT NOT NULL,
-  `thread_id` INT NOT NULL,
-  PRIMARY KEY (`accomplishment_id`, `thread_id`),
-  CONSTRAINT `fk_accomplishment_comment_1`
-    FOREIGN KEY (`accomplishment_id`)
-    REFERENCES `mindlevel`.`accomplishment` (`id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
--- -----------------------------------------------------
 -- Table `mindlevel`.`custom_db`
 -- -----------------------------------------------------
 

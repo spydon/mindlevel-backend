@@ -14,7 +14,7 @@ trait Tables {
   import slick.jdbc.{GetResult => GR}
 
   /** DDL for all tables. Call .create to execute. */
-  lazy val schema: profile.SchemaDescription = Array(Accomplishment.schema, AccomplishmentLike.schema, Category.schema, Challenge.schema, ChallengeCategory.schema, CustomDb.schema, Notification.schema, NotificationTarget.schema, NotificationUser.schema, Session.schema, User.schema, UserAccomplishment.schema, UserExtra.schema).reduceLeft(_ ++ _)
+  lazy val schema: profile.SchemaDescription = Array(Accomplishment.schema, AccomplishmentComment.schema, AccomplishmentLike.schema, Category.schema, Challenge.schema, ChallengeCategory.schema, Comment.schema, CustomDb.schema, Notification.schema, NotificationTarget.schema, NotificationUser.schema, Session.schema, User.schema, UserAccomplishment.schema, UserExtra.schema).reduceLeft(_ ++ _)
   @deprecated("Use .schema instead of .ddl", "3.0")
   def ddl = schema
 
@@ -64,6 +64,35 @@ trait Tables {
   }
   /** Collection-like TableQuery object for table Accomplishment */
   lazy val Accomplishment = new TableQuery(tag => new Accomplishment(tag))
+
+  /** Entity class storing rows of table AccomplishmentComment
+   *  @param accomplishmentId Database column accomplishment_id SqlType(INT)
+   *  @param threadId Database column thread_id SqlType(INT) */
+  case class AccomplishmentCommentRow(accomplishmentId: Int, threadId: Int)
+  /** GetResult implicit for fetching AccomplishmentCommentRow objects using plain SQL queries */
+  implicit def GetResultAccomplishmentCommentRow(implicit e0: GR[Int]): GR[AccomplishmentCommentRow] = GR{
+    prs => import prs._
+    AccomplishmentCommentRow.tupled((<<[Int], <<[Int]))
+  }
+  /** Table description of table accomplishment_comment. Objects of this class serve as prototypes for rows in queries. */
+  class AccomplishmentComment(_tableTag: Tag) extends profile.api.Table[AccomplishmentCommentRow](_tableTag, None, "accomplishment_comment") {
+    def * = (accomplishmentId, threadId) <> (AccomplishmentCommentRow.tupled, AccomplishmentCommentRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (Rep.Some(accomplishmentId), Rep.Some(threadId)).shaped.<>({r=>import r._; _1.map(_=> AccomplishmentCommentRow.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column accomplishment_id SqlType(INT) */
+    val accomplishmentId: Rep[Int] = column[Int]("accomplishment_id")
+    /** Database column thread_id SqlType(INT) */
+    val threadId: Rep[Int] = column[Int]("thread_id")
+
+    /** Primary key of AccomplishmentComment (database name accomplishment_comment_PK) */
+    val pk = primaryKey("accomplishment_comment_PK", (accomplishmentId, threadId))
+
+    /** Foreign key referencing Accomplishment (database name fk_accomplishment_comment_1) */
+    lazy val accomplishmentFk = foreignKey("fk_accomplishment_comment_1", accomplishmentId, Accomplishment)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  }
+  /** Collection-like TableQuery object for table AccomplishmentComment */
+  lazy val AccomplishmentComment = new TableQuery(tag => new AccomplishmentComment(tag))
 
   /** Entity class storing rows of table AccomplishmentLike
    *  @param username Database column username SqlType(VARCHAR), Length(191,true)
@@ -205,6 +234,44 @@ trait Tables {
   }
   /** Collection-like TableQuery object for table ChallengeCategory */
   lazy val ChallengeCategory = new TableQuery(tag => new ChallengeCategory(tag))
+
+  /** Entity class storing rows of table Comment
+   *  @param id Database column id SqlType(INT), AutoInc, PrimaryKey
+   *  @param threadId Database column thread_id SqlType(INT)
+   *  @param username Database column username SqlType(VARCHAR), Length(191,true)
+   *  @param comment Database column comment SqlType(VARCHAR), Length(1024,true)
+   *  @param created Database column created SqlType(TIMESTAMP) */
+  case class CommentRow(id: Int, threadId: Int, username: String, comment: String, created: java.sql.Timestamp)
+  /** GetResult implicit for fetching CommentRow objects using plain SQL queries */
+  implicit def GetResultCommentRow(implicit e0: GR[Int], e1: GR[String], e2: GR[java.sql.Timestamp]): GR[CommentRow] = GR{
+    prs => import prs._
+    CommentRow.tupled((<<[Int], <<[Int], <<[String], <<[String], <<[java.sql.Timestamp]))
+  }
+  /** Table description of table comment. Objects of this class serve as prototypes for rows in queries. */
+  class Comment(_tableTag: Tag) extends profile.api.Table[CommentRow](_tableTag, None, "comment") {
+    def * = (id, threadId, username, comment, created) <> (CommentRow.tupled, CommentRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (Rep.Some(id), Rep.Some(threadId), Rep.Some(username), Rep.Some(comment), Rep.Some(created)).shaped.<>({r=>import r._; _1.map(_=> CommentRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column id SqlType(INT), AutoInc, PrimaryKey */
+    val id: Rep[Int] = column[Int]("id", O.AutoInc, O.PrimaryKey)
+    /** Database column thread_id SqlType(INT) */
+    val threadId: Rep[Int] = column[Int]("thread_id")
+    /** Database column username SqlType(VARCHAR), Length(191,true) */
+    val username: Rep[String] = column[String]("username", O.Length(191,varying=true))
+    /** Database column comment SqlType(VARCHAR), Length(1024,true) */
+    val comment: Rep[String] = column[String]("comment", O.Length(1024,varying=true))
+    /** Database column created SqlType(TIMESTAMP) */
+    val created: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created")
+
+    /** Foreign key referencing User (database name fk_comment_1) */
+    lazy val userFk = foreignKey("fk_comment_1", username, User)(r => r.username, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+
+    /** Index over (threadId) (database name fk_comment_thread_id) */
+    val index1 = index("fk_comment_thread_id", threadId)
+  }
+  /** Collection-like TableQuery object for table Comment */
+  lazy val Comment = new TableQuery(tag => new Comment(tag))
 
   /** Entity class storing rows of table CustomDb
    *  @param id Database column id SqlType(INT), AutoInc, PrimaryKey

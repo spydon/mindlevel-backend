@@ -271,21 +271,6 @@ CREATE TABLE IF NOT EXISTS `veglevel`.`comment` (
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
--- Table `veglevel`.`accomplishment_comment`
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS `veglevel`.`accomplishment_comment` (
-  `accomplishment_id` INT NOT NULL,
-  `thread_id` INT NOT NULL,
-  PRIMARY KEY (`accomplishment_id`, `thread_id`),
-  CONSTRAINT `fk_accomplishment_comment_1`
-    FOREIGN KEY (`accomplishment_id`)
-    REFERENCES `veglevel`.`accomplishment` (`id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
--- -----------------------------------------------------
 -- Table `veglevel`.`custom_db`
 -- -----------------------------------------------------
 

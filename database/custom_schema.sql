@@ -271,21 +271,6 @@ CREATE TABLE IF NOT EXISTS `custom`.`comment` (
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
--- Table `custom`.`accomplishment_comment`
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS `custom`.`accomplishment_comment` (
-  `accomplishment_id` INT NOT NULL,
-  `thread_id` INT NOT NULL,
-  PRIMARY KEY (`accomplishment_id`, `thread_id`),
-  CONSTRAINT `fk_accomplishment_comment_1`
-    FOREIGN KEY (`accomplishment_id`)
-    REFERENCES `custom`.`accomplishment` (`id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
--- -----------------------------------------------------
 -- Table `custom`.`custom_db`
 -- -----------------------------------------------------
 
