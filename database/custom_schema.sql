@@ -252,6 +252,40 @@ CREATE TABLE IF NOT EXISTS `custom`.`notification_target` (
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
+-- Table `custom`.`comment`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `custom`.`comment` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `thread_id` INT NOT NULL,
+  `username` VARCHAR(191) NOT NULL,
+  `comment` VARCHAR(1024) NOT NULL,
+  `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  INDEX `fk_comment_thread_id` (`thread_id` ASC),
+  CONSTRAINT `fk_comment_1`
+    FOREIGN KEY (`username`)
+    REFERENCES `custom`.`user` (`username`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `custom`.`accomplishment_comment`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `custom`.`accomplishment_comment` (
+  `accomplishment_id` INT NOT NULL,
+  `thread_id` INT NOT NULL,
+  PRIMARY KEY (`accomplishment_id`, `thread_id`),
+  CONSTRAINT `fk_accomplishment_comment_1`
+    FOREIGN KEY (`accomplishment_id`)
+    REFERENCES `custom`.`accomplishment` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
 -- Table `custom`.`custom_db`
 -- -----------------------------------------------------
 

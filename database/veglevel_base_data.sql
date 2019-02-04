@@ -82,6 +82,36 @@ VALUES (
 "Make a dessert and remember to post the recipe in the description!\n\nInspiration: https://www.silviacooks.org/vegan-chocolate-mousse",
 "v10_2_dessert.jpg", "Community", True, 10);
 
+INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
+VALUES (
+"How I met your Hummus",
+"Do a creative hummus, with for examples different spices or vegetables in it.",
+"v11_hummus.jpg", "Community", True, 11);
+
+INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
+VALUES (
+"Store Influencer",
+"Ask your local grocery store to take in some vegan product that they don't have in stock. Usually they are more willing that you thing to take in new products!\n\nA good way is to bring a note with the name and/or website of the product so that they can find it.",
+"v12_store.jpg", "Community", True, 12);
+
+INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
+VALUES (
+"Squirrel Milk",
+"Make milk out of for example nuts, beans or oats. It is much easier than it sounds and it is a lot cheaper than buying it.",
+"v13_nutmilk.jpg", "Community", True, 13);
+
+INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
+VALUES (
+"Cultural Vegoppriation",
+"Take a non-vegan cultural dish from your culture/country and veganize it.",
+"v13_2_cultural.jpg", "Community", True, 13);
+
+INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
+VALUES (
+"Restaurant",
+"We have to show that there is interest in vegan food out in the restraurants right? So this one is simply about ordering a vegan dish from a restaurant.",
+"v14_restaurant.jpg", "Community", True, 14);
+
 # Shoes, Upcycle, ask local food store for vegan product, make tempeh, make vegan milk, make cheese
 # spaghetti etc, Find protein source, Make parents or relatives food, Fool somebody that mostly eats meat
 

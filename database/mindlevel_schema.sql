@@ -252,6 +252,40 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`notification_target` (
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
+-- Table `mindlevel`.`comment`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `mindlevel`.`comment` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `thread_id` INT NOT NULL,
+  `username` VARCHAR(191) NOT NULL,
+  `comment` VARCHAR(1024) NOT NULL,
+  `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  INDEX `fk_comment_thread_id` (`thread_id` ASC),
+  CONSTRAINT `fk_comment_1`
+    FOREIGN KEY (`username`)
+    REFERENCES `mindlevel`.`user` (`username`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `mindlevel`.`accomplishment_comment`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `mindlevel`.`accomplishment_comment` (
+  `accomplishment_id` INT NOT NULL,
+  `thread_id` INT NOT NULL,
+  PRIMARY KEY (`accomplishment_id`, `thread_id`),
+  CONSTRAINT `fk_accomplishment_comment_1`
+    FOREIGN KEY (`accomplishment_id`)
+    REFERENCES `mindlevel`.`accomplishment` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
 -- Table `mindlevel`.`custom_db`
 -- -----------------------------------------------------
 
