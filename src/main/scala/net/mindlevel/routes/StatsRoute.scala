@@ -40,6 +40,11 @@ object StatsRoute extends AbstractRoute {
                   onSuccess(count[Accomplishment](Accomplishment))(complete(_))
                 }
               } ~
+              path("comment") {
+                get {
+                  onSuccess(count[Comment](Comment))(complete(_))
+                }
+              } ~
               path("challenge") {
                 get {
                   onSuccess(count[Challenge](Challenge))(complete(_))
@@ -65,6 +70,12 @@ object StatsRoute extends AbstractRoute {
                 get {
                   val username = db.run(User.sortBy(_.created.desc).take(1).map(_.username).result)
                   onSuccess(username)(complete(_))
+                }
+              } ~
+              path("comment") {
+                get {
+                  val comment = db.run(Comment.sortBy(_.created.desc).take(1).result)
+                  onSuccess(comment)(complete(_))
                 }
               } ~
               path("accomplishment") {
