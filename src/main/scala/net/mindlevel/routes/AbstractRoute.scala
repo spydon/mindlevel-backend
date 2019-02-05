@@ -35,6 +35,7 @@ trait AbstractRoute {
   protected val challengePageSize = 20
 
   protected def now(): Long = Instant.now.getEpochSecond*1000
+  protected def timestamp(): Timestamp = new Timestamp(now())
 
   protected implicit object TimestampFormat extends JsonFormat[Timestamp] {
     def write(obj: Timestamp): JsNumber = JsNumber(obj.getTime)

@@ -26,7 +26,7 @@ object CommentRoute extends AbstractRoute {
               entity(as[CommentRow]) { comment =>
                 onSuccess(nameFromSession(db, session)) {
                   case Some(username) =>
-                    val userComment = comment.copy(username = username, created = new Timestamp(now()))
+                    val userComment = comment.copy(username = username, created = timestamp())
                     val maybeUpdated = db.run(Comment += userComment)
                     onSuccess(maybeUpdated) {
                       case 1 => complete(StatusCodes.OK)
@@ -44,6 +44,16 @@ object CommentRoute extends AbstractRoute {
                   get {
                     // Thread Id is accomplishment id for the time being, expand when needed
                     val comments = db.run(Comment.filter(_.threadId === threadId).sortBy(_.created.asc).result)
+                    complete(comments)
+                  }
+                } ~
+                pathPrefix("since") {
+                  path(LongNumber) { timestamp => // Unix time
+                    // Thread Id is accomplishment id for the time being, expand when needed
+                    val comments =
+                      db.run(Comment.filter(_.threadId === threadId)
+                                    .filter(_.created > new Timestamp(timestamp))
+                                    .sortBy(_.created.asc).result)
                     complete(comments)
                   }
                 } ~

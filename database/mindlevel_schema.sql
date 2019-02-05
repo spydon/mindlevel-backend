@@ -263,6 +263,7 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`comment` (
   `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   INDEX `fk_comment_thread_id` (`thread_id` ASC),
+  INDEX `fk_comment_created` (`created` ASC),
   CONSTRAINT `fk_comment_1`
     FOREIGN KEY (`username`)
     REFERENCES `mindlevel`.`user` (`username`)

@@ -1,0 +1,638 @@
+{
+	"variables": [],
+	"info": {
+		"name": "Mindlevel",
+		"_postman_id": "4fb55e8d-cf69-6765-4fd1-2c28017cbe7b",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "User.post",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.environment.set(\"username\", new Date());",
+							"pm.environment.set(\"password\", new Date());"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "{{url}}/user",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\",\n  \"image\": \"http://slick.lightbend.com/doc/3.0.0/_static/slick-logo.png\",\n  \"description\": \"Spydons description\",\n  \"created\": 0,\n  \"lastActive\": 0\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Login.post",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"var token = responseBody;",
+							"postman.setGlobalVariable(\"token\", token);"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "{{url}}/login",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\",\n  \"session\": \"\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Challenge.getAll",
+			"request": {
+				"url": "{{url}}/challenge",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 0,\n  \"title\": \"testpost\",\n  \"description\": \"testdesc\",\n  \"image\": \"url\",\n  \"created\": 0,\n  \"creator\": \"spydon\",\n  \"validated\": true\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Challenge.getAllRestriced",
+			"request": {
+				"url": "{{url}}/challenge/restricted",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 0,\n  \"title\": \"testpost\",\n  \"description\": \"testdesc\",\n  \"image\": \"url\",\n  \"created\": 0,\n  \"creator\": \"spydon\",\n  \"validated\": true\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Challenge.getCategories",
+			"request": {
+				"url": "{{url}}/challenge/category",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 0,\n  \"title\": \"testpost\",\n  \"description\": \"testdesc\",\n  \"image\": \"url\",\n  \"created\": 0,\n  \"creator\": \"spydon\",\n  \"validated\": true\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Challenge.getAccomplishments",
+			"request": {
+				"url": "{{url}}/challenge/1/accomplishment",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 0,\n  \"title\": \"testpost\",\n  \"description\": \"testdesc\",\n  \"image\": \"url\",\n  \"created\": 0,\n  \"creator\": \"spydon\",\n  \"validated\": true\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Challenge.post",
+			"request": {
+				"url": "{{url}}/challenge",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "challenge",
+							"value": "{\n  \"id\": 0,\n  \"title\": \"Test Mission\",\n  \"description\": \"With some description\",\n  \"image\": \"\",\n  \"created\": 0,\n  \"creator\": \"spydon\",\n  \"validated\": true\n}",
+							"type": "text"
+						},
+						{
+							"key": "image",
+							"type": "file",
+							"src": "2.jpg"
+						}
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Accomplishment.post",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"var id = pm.response.json().id;",
+							"pm.environment.set(\"accomplishment_id\", id);"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "{{url}}/accomplishment",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "accomplishment",
+							"value": "{   \"id\": 20,   \"title\": \"Train Compliment\",   \"description\": \"Told someone that they were cute, then ran away and left them in confusion.\",   \"image\": \"url\",   \"created\": 10,   \"challengeId\": 1,   \"score\": 0 }",
+							"type": "text"
+						},
+						{
+							"key": "image",
+							"type": "file",
+							"src": "2.jpg"
+						},
+						{
+							"key": "contributors",
+							"value": "{ \"contributors\": [\"spydon\"] }",
+							"type": "text"
+						}
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Accomplishment.post contributors",
+			"request": {
+				"url": "{{url}}/accomplishment/{{accomplishment_id}}/contributor",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[\"spydon\", \"spydon2\"]"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Accomplishment.get contributors",
+			"request": {
+				"url": "{{url}}/accomplishment/1/contributor",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 0,\n  \"title\": \"testpost\",\n  \"description\": \"testdesc\",\n  \"image\": \"url\",\n  \"created\": 0,\n  \"creator\": \"spydon\",\n  \"validated\": true\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Accomplishment.get like",
+			"request": {
+				"url": "{{url}}/accomplishment/1/like",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 0,\n  \"title\": \"testpost\",\n  \"description\": \"testdesc\",\n  \"image\": \"url\",\n  \"created\": 0,\n  \"creator\": \"spydon\",\n  \"validated\": true\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Accomplishment.post image",
+			"request": {
+				"url": "{{url}}/accomplishment/1/image",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "multipart/form-data; boundary=------------mindlevel",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "file",
+					"file": {
+						"src": ""
+					}
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Accomplishment.getAll",
+			"request": {
+				"url": "{{url}}/accomplishment/latest",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 0,\n  \"title\": \"testpost\",\n  \"description\": \"testdesc\",\n  \"image\": \"url\",\n  \"created\": 0,\n  \"creator\": \"spydon\",\n  \"validated\": true\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Accomplishment.getLatest",
+			"request": {
+				"url": "{{url}}/accomplishment/latest/5",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 0,\n  \"title\": \"testpost\",\n  \"description\": \"testdesc\",\n  \"image\": \"url\",\n  \"created\": 0,\n  \"creator\": \"spydon\",\n  \"validated\": true\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Accomplishment.getLatest Range",
+			"request": {
+				"url": "{{url}}/accomplishment/latest/5",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 0,\n  \"title\": \"testpost\",\n  \"description\": \"testdesc\",\n  \"image\": \"url\",\n  \"created\": 0,\n  \"creator\": \"spydon\",\n  \"validated\": true\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "User.getAll",
+			"request": {
+				"url": "{{url}}/user",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 0,\n  \"title\": \"testpost\",\n  \"description\": \"testdesc\",\n  \"image\": \"url\",\n  \"created\": 0,\n  \"creator\": \"spydon\",\n  \"validated\": true\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "User.get email",
+			"request": {
+				"url": "{{url}}/user/spydon/email",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 0,\n  \"title\": \"testpost\",\n  \"description\": \"testdesc\",\n  \"image\": \"url\",\n  \"created\": 0,\n  \"creator\": \"spydon\",\n  \"validated\": true\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "User.getAll usernames",
+			"request": {
+				"url": "{{url}}/user/spydon",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 0,\n  \"title\": \"testpost\",\n  \"description\": \"testdesc\",\n  \"image\": \"url\",\n  \"created\": 0,\n  \"creator\": \"spydon\",\n  \"validated\": true\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "User.get highscore",
+			"request": {
+				"url": "{{url}}/user/highscore/20",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 0,\n  \"title\": \"testpost\",\n  \"description\": \"testdesc\",\n  \"image\": \"url\",\n  \"created\": 0,\n  \"creator\": \"spydon\",\n  \"validated\": true\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "User.getAccomplishments",
+			"request": {
+				"url": "{{url}}/user/spydon/accomplishment",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 0,\n  \"title\": \"testpost\",\n  \"description\": \"testdesc\",\n  \"image\": \"url\",\n  \"created\": 0,\n  \"creator\": \"spydon\",\n  \"validated\": true\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "User.put",
+			"request": {
+				"url": "{{url}}/user/spydon",
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "user",
+							"value": "{   \"username\": \"spydon\",   \"image\": \"url2\", \"score\":0,   \"description\": \"😍\",   \"created\": 1,   \"lastActive\": 1 }",
+							"type": "text"
+						},
+						{
+							"key": "image",
+							"value": "",
+							"type": "file"
+						},
+						{
+							"key": "extra",
+							"value": "{ \"username\": \"spydon\", \"password\": \"spydon\", \"email\":\"me@lukas.com\"}",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Logout.post",
+			"request": {
+				"url": "{{url}}/logout",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "X-Session",
+						"value": "{{token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"spydon\",\n  \"password\": \"spydon\",\n  \"session\": \"\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}
