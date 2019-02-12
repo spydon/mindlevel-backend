@@ -217,7 +217,7 @@ object UserRoute extends AbstractRoute {
                   } ~
                     path(IntNumber) { notificationId =>
                       delete {
-                        val isUpdated = isAuthorized(db, username, session) map {
+                        onSuccess(isAuthorized(db, username, session)) {
                           case true =>
                             val q = for {
                               nu <- NotificationUser if nu.username === username && nu.notificationId === notificationId
@@ -230,7 +230,6 @@ object UserRoute extends AbstractRoute {
                           case false =>
                             complete(StatusCodes.Unauthorized)
                         }
-                        onSuccess(isUpdated)(result => result)
                       }
                     }
                 }

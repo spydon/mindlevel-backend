@@ -210,13 +210,8 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`notification` (
   `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `priority` INT DEFAULT 0,
   `target_id` INT DEFAULT 0,
-  PRIMARY KEY (`id`),
-  INDEX `fk_notification_target_idx` (`target_id` ASC),
-  CONSTRAINT `fk_notification_target`
-    FOREIGN KEY (`target_id`)
-    REFERENCES `mindlevel`.`notification_target` (`id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+  `type` VARCHAR(191) DEFAULT '',
+  PRIMARY KEY (`id`))
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
@@ -229,6 +224,7 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`notification_user` (
   `seen` TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`notification_id`, `username`),
   INDEX `fk_notification_user_idx` (`username` ASC),
+  INDEX `fk_notification_seen_idx` (`seen` ASC),
   CONSTRAINT `fk_notification_user_1`
     FOREIGN KEY (`notification_id`)
     REFERENCES `mindlevel`.`notification` (`id`)
@@ -239,16 +235,6 @@ CREATE TABLE IF NOT EXISTS `mindlevel`.`notification_user` (
     REFERENCES `mindlevel`.`user` (`username`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
--- -----------------------------------------------------
--- Table `mindlevel`.`notification_target`
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS `mindlevel`.`notification_target` (
-  `id` INT NOT NULL,
-  `name` VARCHAR(191) NOT NULL,
-  PRIMARY KEY (`id`))
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------

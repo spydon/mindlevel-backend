@@ -14,7 +14,7 @@ trait Tables {
   import slick.jdbc.{GetResult => GR}
 
   /** DDL for all tables. Call .create to execute. */
-  lazy val schema: profile.SchemaDescription = Array(Accomplishment.schema, AccomplishmentComment.schema, AccomplishmentLike.schema, Category.schema, Challenge.schema, ChallengeCategory.schema, Comment.schema, CustomDb.schema, Notification.schema, NotificationTarget.schema, NotificationUser.schema, Session.schema, User.schema, UserAccomplishment.schema, UserExtra.schema).reduceLeft(_ ++ _)
+  lazy val schema: profile.SchemaDescription = Array(Accomplishment.schema, AccomplishmentLike.schema, Category.schema, Challenge.schema, ChallengeCategory.schema, Comment.schema, CustomDb.schema, Notification.schema, NotificationUser.schema, Session.schema, User.schema, UserAccomplishment.schema, UserExtra.schema).reduceLeft(_ ++ _)
   @deprecated("Use .schema instead of .ddl", "3.0")
   def ddl = schema
 
@@ -64,35 +64,6 @@ trait Tables {
   }
   /** Collection-like TableQuery object for table Accomplishment */
   lazy val Accomplishment = new TableQuery(tag => new Accomplishment(tag))
-
-  /** Entity class storing rows of table AccomplishmentComment
-   *  @param accomplishmentId Database column accomplishment_id SqlType(INT)
-   *  @param threadId Database column thread_id SqlType(INT) */
-  case class AccomplishmentCommentRow(accomplishmentId: Int, threadId: Int)
-  /** GetResult implicit for fetching AccomplishmentCommentRow objects using plain SQL queries */
-  implicit def GetResultAccomplishmentCommentRow(implicit e0: GR[Int]): GR[AccomplishmentCommentRow] = GR{
-    prs => import prs._
-    AccomplishmentCommentRow.tupled((<<[Int], <<[Int]))
-  }
-  /** Table description of table accomplishment_comment. Objects of this class serve as prototypes for rows in queries. */
-  class AccomplishmentComment(_tableTag: Tag) extends profile.api.Table[AccomplishmentCommentRow](_tableTag, None, "accomplishment_comment") {
-    def * = (accomplishmentId, threadId) <> (AccomplishmentCommentRow.tupled, AccomplishmentCommentRow.unapply)
-    /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(accomplishmentId), Rep.Some(threadId)).shaped.<>({r=>import r._; _1.map(_=> AccomplishmentCommentRow.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
-
-    /** Database column accomplishment_id SqlType(INT) */
-    val accomplishmentId: Rep[Int] = column[Int]("accomplishment_id")
-    /** Database column thread_id SqlType(INT) */
-    val threadId: Rep[Int] = column[Int]("thread_id")
-
-    /** Primary key of AccomplishmentComment (database name accomplishment_comment_PK) */
-    val pk = primaryKey("accomplishment_comment_PK", (accomplishmentId, threadId))
-
-    /** Foreign key referencing Accomplishment (database name fk_accomplishment_comment_1) */
-    lazy val accomplishmentFk = foreignKey("fk_accomplishment_comment_1", accomplishmentId, Accomplishment)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
-  }
-  /** Collection-like TableQuery object for table AccomplishmentComment */
-  lazy val AccomplishmentComment = new TableQuery(tag => new AccomplishmentComment(tag))
 
   /** Entity class storing rows of table AccomplishmentLike
    *  @param username Database column username SqlType(VARCHAR), Length(191,true)
@@ -267,8 +238,10 @@ trait Tables {
     /** Foreign key referencing User (database name fk_comment_1) */
     lazy val userFk = foreignKey("fk_comment_1", username, User)(r => r.username, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 
+    /** Index over (created) (database name fk_comment_created) */
+    val index1 = index("fk_comment_created", created)
     /** Index over (threadId) (database name fk_comment_thread_id) */
-    val index1 = index("fk_comment_thread_id", threadId)
+    val index2 = index("fk_comment_thread_id", threadId)
   }
   /** Collection-like TableQuery object for table Comment */
   lazy val Comment = new TableQuery(tag => new Comment(tag))
@@ -306,18 +279,20 @@ trait Tables {
    *  @param image Database column image SqlType(VARCHAR), Length(191,true), Default(None)
    *  @param created Database column created SqlType(TIMESTAMP)
    *  @param priority Database column priority SqlType(INT), Default(Some(0))
-   *  @param targetId Database column target_id SqlType(INT), Default(Some(0)) */
-  case class NotificationRow(id: Int, title: String, description: String, image: Option[String] = None, created: java.sql.Timestamp, priority: Option[Int] = Some(0), targetId: Option[Int] = Some(0))
+   *  @param targetId Database column target_id SqlType(INT), Default(Some(0))
+   *  @param `type` Database column type SqlType(VARCHAR), Length(191,true), Default(Some()) */
+  case class NotificationRow(id: Int, title: String, description: String, image: Option[String] = None, created: java.sql.Timestamp, priority: Option[Int] = Some(0), targetId: Option[Int] = Some(0), `type`: Option[String] = Some(""))
   /** GetResult implicit for fetching NotificationRow objects using plain SQL queries */
   implicit def GetResultNotificationRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Option[String]], e3: GR[java.sql.Timestamp], e4: GR[Option[Int]]): GR[NotificationRow] = GR{
     prs => import prs._
-    NotificationRow.tupled((<<[Int], <<[String], <<[String], <<?[String], <<[java.sql.Timestamp], <<?[Int], <<?[Int]))
+    NotificationRow.tupled((<<[Int], <<[String], <<[String], <<?[String], <<[java.sql.Timestamp], <<?[Int], <<?[Int], <<?[String]))
   }
-  /** Table description of table notification. Objects of this class serve as prototypes for rows in queries. */
+  /** Table description of table notification. Objects of this class serve as prototypes for rows in queries.
+   *  NOTE: The following names collided with Scala keywords and were escaped: type */
   class Notification(_tableTag: Tag) extends profile.api.Table[NotificationRow](_tableTag, None, "notification") {
-    def * = (id, title, description, image, created, priority, targetId) <> (NotificationRow.tupled, NotificationRow.unapply)
+    def * = (id, title, description, image, created, priority, targetId, `type`) <> (NotificationRow.tupled, NotificationRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(title), Rep.Some(description), image, Rep.Some(created), priority, targetId).shaped.<>({r=>import r._; _1.map(_=> NotificationRow.tupled((_1.get, _2.get, _3.get, _4, _5.get, _6, _7)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(title), Rep.Some(description), image, Rep.Some(created), priority, targetId, `type`).shaped.<>({r=>import r._; _1.map(_=> NotificationRow.tupled((_1.get, _2.get, _3.get, _4, _5.get, _6, _7, _8)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(INT), AutoInc, PrimaryKey */
     val id: Rep[Int] = column[Int]("id", O.AutoInc, O.PrimaryKey)
@@ -333,35 +308,12 @@ trait Tables {
     val priority: Rep[Option[Int]] = column[Option[Int]]("priority", O.Default(Some(0)))
     /** Database column target_id SqlType(INT), Default(Some(0)) */
     val targetId: Rep[Option[Int]] = column[Option[Int]]("target_id", O.Default(Some(0)))
-
-    /** Foreign key referencing NotificationTarget (database name fk_notification_target) */
-    lazy val notificationTargetFk = foreignKey("fk_notification_target", targetId, NotificationTarget)(r => Rep.Some(r.id), onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+    /** Database column type SqlType(VARCHAR), Length(191,true), Default(Some())
+     *  NOTE: The name was escaped because it collided with a Scala keyword. */
+    val `type`: Rep[Option[String]] = column[Option[String]]("type", O.Length(191,varying=true), O.Default(Some("")))
   }
   /** Collection-like TableQuery object for table Notification */
   lazy val Notification = new TableQuery(tag => new Notification(tag))
-
-  /** Entity class storing rows of table NotificationTarget
-   *  @param id Database column id SqlType(INT), PrimaryKey
-   *  @param name Database column name SqlType(VARCHAR), Length(191,true) */
-  case class NotificationTargetRow(id: Int, name: String)
-  /** GetResult implicit for fetching NotificationTargetRow objects using plain SQL queries */
-  implicit def GetResultNotificationTargetRow(implicit e0: GR[Int], e1: GR[String]): GR[NotificationTargetRow] = GR{
-    prs => import prs._
-    NotificationTargetRow.tupled((<<[Int], <<[String]))
-  }
-  /** Table description of table notification_target. Objects of this class serve as prototypes for rows in queries. */
-  class NotificationTarget(_tableTag: Tag) extends profile.api.Table[NotificationTargetRow](_tableTag, None, "notification_target") {
-    def * = (id, name) <> (NotificationTargetRow.tupled, NotificationTargetRow.unapply)
-    /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(name)).shaped.<>({r=>import r._; _1.map(_=> NotificationTargetRow.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
-
-    /** Database column id SqlType(INT), PrimaryKey */
-    val id: Rep[Int] = column[Int]("id", O.PrimaryKey)
-    /** Database column name SqlType(VARCHAR), Length(191,true) */
-    val name: Rep[String] = column[String]("name", O.Length(191,varying=true))
-  }
-  /** Collection-like TableQuery object for table NotificationTarget */
-  lazy val NotificationTarget = new TableQuery(tag => new NotificationTarget(tag))
 
   /** Entity class storing rows of table NotificationUser
    *  @param notificationId Database column notification_id SqlType(INT)
@@ -393,6 +345,9 @@ trait Tables {
     lazy val notificationFk = foreignKey("fk_notification_user_1", notificationId, Notification)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
     /** Foreign key referencing User (database name fk_notification_user_2) */
     lazy val userFk = foreignKey("fk_notification_user_2", username, User)(r => r.username, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+
+    /** Index over (seen) (database name fk_notification_seen_idx) */
+    val index1 = index("fk_notification_seen_idx", seen)
   }
   /** Collection-like TableQuery object for table NotificationUser */
   lazy val NotificationUser = new TableQuery(tag => new NotificationUser(tag))

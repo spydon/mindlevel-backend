@@ -72,18 +72,7 @@ object NotificationRoute extends AbstractRoute {
               }
             }
           }
-        } ~
-          pathPrefix("latest") {
-            pathEndOrSingleSlash {
-              get {
-                val query = Notification.filter(_.priority === Option(0)).sortBy(_.created.desc).take(1).result
-
-                onSuccess(db.run(query)) { notification =>
-                  complete(notification)
-                }
-              }
-            }
-          }
+        }
       }
     }
 }

@@ -78,7 +78,7 @@ trait AbstractRoute {
   protected implicit val likeResponseFormat = jsonFormat2(LikeResponse)
   protected implicit val contributorsFormat = jsonFormat1(Contributors)
   protected implicit val countFormat = jsonFormat1(Count)
-  protected implicit val notificationFormat = jsonFormat7(NotificationRow)
+  protected implicit val notificationFormat = jsonFormat8(NotificationRow)
   protected implicit val commentFormat = jsonFormat5(CommentRow)
   protected implicit val customDbFormat = jsonFormat3(CustomDbRow)
 
