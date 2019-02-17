@@ -2,10 +2,12 @@ package net.mindlevel
 
 import akka.actor.Actor
 import net.mindlevel.models.Tables.{AccomplishmentRow, ChallengeRow, CommentRow, NotificationRow, NotificationUserRow}
-import net.mindlevel.models.Tables.{Accomplishment, UserAccomplishment, Comment, Notification, NotificationUser}
+import net.mindlevel.models.Tables.{Accomplishment, Comment, Notification, NotificationUser, UserAccomplishment}
 import slick.jdbc.MySQLProfile.api._
 
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 case class CommentUpdate(comment: CommentRow, db: Database)
 case class AccomplishmentUpdate(accomplishment: AccomplishmentRow, db: Database)
@@ -44,7 +46,7 @@ class NotificationService extends Actor {
           NotificationUserRow(notificationId, username, false)
         }
 
-        db.run(NotificationUser ++= userNotifications)
+        Await.result(db.run(NotificationUser ++= userNotifications), 5.seconds)
       }
     }
   }
