@@ -19,7 +19,6 @@ class NotificationService extends Actor {
       return
     }
 
-    val id = comment.id
     val accomplishmentId = comment.threadId
     val accomplishmentF = db.run(Accomplishment.filter(_.id === accomplishmentId).result)
     val creatorsF = db.run(UserAccomplishment.filter(_.accomplishmentId === accomplishmentId).map(_.username).result)
@@ -38,12 +37,13 @@ class NotificationService extends Actor {
       val notificationQuery =
         db.run(Notification returning Notification.map(_.id) +=
           NotificationRow(
-            id = 0, title = title, description = description, created = timestamp, `type` = Some("comment")
+            id = 0, title = title, description = description, created = timestamp, targetId = Some(accomplishmentId),
+            `type` = Some("comment")
           )
         )
       notificationQuery map { notificationId =>
         val userNotifications = users map { username =>
-          NotificationUserRow(notificationId, username, false)
+          NotificationUserRow(notificationId, username)
         }
 
         Await.result(db.run(NotificationUser ++= userNotifications), 5.seconds)
