@@ -1,6 +1,6 @@
 package net.mindlevel
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
@@ -21,6 +21,7 @@ object Boot extends App {
   implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
   val bindingFuture = Http().bindAndHandle(Routes.all, hostname, port)
+  val notificationService = system.actorOf(Props[NotificationService], name = "notifications")
   println(s"Server online at http://$hostname:$port/\nJDBC Host: $jdbc\nSend SIGTERM to stop...")
   // TODO: Handle ctrl+c gracefully
 }

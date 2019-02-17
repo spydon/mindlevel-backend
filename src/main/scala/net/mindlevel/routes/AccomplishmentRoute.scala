@@ -19,6 +19,8 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Success
 
+import net.mindlevel.TimeUtil._
+
 object AccomplishmentRoute extends AbstractRoute {
 
   private type AccomplishmentQuery = Query[Accomplishment, Accomplishment#TableElementType, Seq]
@@ -33,7 +35,7 @@ object AccomplishmentRoute extends AbstractRoute {
   def route: Route =
     pathPrefix("accomplishment") {
       database { db =>
-        sessionId { session =>
+        sessionId() { session =>
           def clean = removeRestricted(db, session)(_)
 
           def cleanHead(query: AccomplishmentQuery) =

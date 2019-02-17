@@ -22,6 +22,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
+import net.mindlevel.TimeUtil._
+
 object ChallengeRoute extends AbstractRoute {
   def removeRestricted(db: Database, session: String)(challenges: Query[Challenge, Challenge#TableElementType, Seq]):
   Future[Seq[Challenge#TableElementType]] = {
@@ -36,7 +38,7 @@ object ChallengeRoute extends AbstractRoute {
   def route: Route =
     pathPrefix("challenge") {
       database { db =>
-        sessionId { session =>
+        sessionId() { session =>
           def clean = removeRestricted(db, session)(_)
 
           pathEndOrSingleSlash {

@@ -14,16 +14,16 @@ import spray.json.DefaultJsonProtocol._
 import slick.jdbc.MySQLProfile.api._
 import net.mindlevel.models.Tables._
 import com.github.t3hnar.bcrypt._
-import net.mindlevel.S3Util
-import net.mindlevel.models.Tables
+import net.mindlevel.{S3Util, TimeUtil}
 import slick.dbio.Effect.{Transactional, Write}
-import slick.model.Table
 
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
+
+import TimeUtil._
 
 object UserRoute extends AbstractRoute {
   def route: Route =
@@ -71,8 +71,8 @@ object UserRoute extends AbstractRoute {
             }
           } ~
           pathPrefix(Segment) { username =>
-            sessionId { session =>
-              pathEndOrSingleSlash {
+            pathEndOrSingleSlash {
+              sessionId() { session =>
                 get {
                   val maybeUser = db.run(User.filter(_.username === username).result.headOption)
 
@@ -155,42 +155,46 @@ object UserRoute extends AbstractRoute {
                   }
               } ~
                 path("email") {
-                  get {
-                    onSuccess(isAuthorized(db, username, session)) {
-                      case true =>
-                        val query = db.run(UserExtra.filter(_.username === username).map(_.email).result.headOption)
-                        onSuccess(query)(complete(_))
-                      case false =>
-                        complete(StatusCodes.Unauthorized)
+                  sessionId() { session =>
+                    get {
+                      onSuccess(isAuthorized(db, username, session)) {
+                        case true =>
+                          val query = db.run(UserExtra.filter(_.username === username).map(_.email).result.headOption)
+                          onSuccess(query)(complete(_))
+                        case false =>
+                          complete(StatusCodes.Unauthorized)
+                      }
                     }
                   }
                 } ~
                 path("image") {
-                  post {
-                    onSuccess(isAuthorized(db, username, session)) {
-                      case true =>
-                        extractRequestContext { ctx =>
-                          implicit val materializer = ctx.materializer
-                          implicit val ec = ctx.executionContext
-                          fileUpload("image") {
-                            case (fileInfo, fileStream) =>
-                              val filename = fileInfo.fileName // TODO: Hash later
-                            val sink = FileIO.toPath(Paths.get("/tmp") resolve filename)
-                              val writeResult = fileStream.runWith(sink)
-                              onSuccess(writeResult) { result =>
-                                result.status match {
-                                  case Success(_) =>
-                                    val q = for {u <- User if u.username === username} yield u.image
-                                    db.run(q.update(Some(filename))) // Fire and forget
-                                    complete(s"Successfully written ${result.count} bytes")
-                                  case Failure(e) =>
-                                    throw e
+                  sessionId() { session =>
+                    post {
+                      onSuccess(isAuthorized(db, username, session)) {
+                        case true =>
+                          extractRequestContext { ctx =>
+                            implicit val materializer = ctx.materializer
+                            implicit val ec = ctx.executionContext
+                            fileUpload("image") {
+                              case (fileInfo, fileStream) =>
+                                val filename = fileInfo.fileName // TODO: Hash later
+                              val sink = FileIO.toPath(Paths.get("/tmp") resolve filename)
+                                val writeResult = fileStream.runWith(sink)
+                                onSuccess(writeResult) { result =>
+                                  result.status match {
+                                    case Success(_) =>
+                                      val q = for {u <- User if u.username === username} yield u.image
+                                      db.run(q.update(Some(filename))) // Fire and forget
+                                      complete(s"Successfully written ${result.count} bytes")
+                                    case Failure(e) =>
+                                      throw e
+                                  }
                                 }
-                              }
+                            }
                           }
-                        }
-                      case false =>
-                        complete(StatusCodes.Unauthorized)
+                        case false =>
+                          complete(StatusCodes.Unauthorized)
+                      }
                     }
                   }
                 } ~
@@ -203,35 +207,37 @@ object UserRoute extends AbstractRoute {
                   }
                 } ~
                 pathPrefix("notification") {
-                  pathEndOrSingleSlash {
-                    get {
-                      val innerJoin = for {
-                        (_, n) <-
-                          NotificationUser.filter(nu => nu.username === username && !nu.seen) join Notification on (_.notificationId === _.id)
-                      } yield n
+                  sessionId(false) { session =>
+                    pathEndOrSingleSlash {
+                      get {
+                        val innerJoin = for {
+                          (_, n) <-
+                            NotificationUser.filter(nu => nu.username === username && !nu.seen) join Notification on (_.notificationId === _.id)
+                        } yield n
 
-                      onSuccess(db.run(innerJoin.result)) { notifications =>
-                        complete(notifications)
-                      }
-                    }
-                  } ~
-                    path(IntNumber) { notificationId =>
-                      delete {
-                        onSuccess(isAuthorized(db, username, session)) {
-                          case true =>
-                            val q = for {
-                              nu <- NotificationUser if nu.username === username && nu.notificationId === notificationId
-                            } yield nu.seen
-                            val maybeUpdated = db.run(q.update(true))
-                            onSuccess(maybeUpdated) {
-                              case 0 => complete(StatusCodes.NotFound)
-                              case _ => complete(StatusCodes.OK)
-                            }
-                          case false =>
-                            complete(StatusCodes.Unauthorized)
+                        onSuccess(db.run(innerJoin.result)) { notifications =>
+                          complete(notifications)
                         }
                       }
-                    }
+                    } ~
+                      path(IntNumber) { notificationId =>
+                        delete {
+                          onSuccess(isAuthorized(db, username, session)) {
+                            case true =>
+                              val q = for {
+                                nu <- NotificationUser if nu.username === username && nu.notificationId === notificationId
+                              } yield nu.seen
+                              val maybeUpdated = db.run(q.update(true))
+                              onSuccess(maybeUpdated) {
+                                case 0 => complete(StatusCodes.NotFound)
+                                case _ => complete(StatusCodes.OK)
+                              }
+                            case false =>
+                              complete(StatusCodes.Unauthorized)
+                          }
+                        }
+                      }
+                  }
                 }
             }
           }

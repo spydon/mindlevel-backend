@@ -19,6 +19,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
+import net.mindlevel.TimeUtil._
+
 object NotificationRoute extends AbstractRoute {
 
   private type NotificationQuery = Query[Notification, Notification#TableElementType, Seq]
@@ -28,7 +30,7 @@ object NotificationRoute extends AbstractRoute {
       database { db =>
         pathEndOrSingleSlash {
           post {
-            sessionId { session =>
+            sessionId() { session =>
               extractRequestContext { ctx =>
                 implicit val materializer = ctx.materializer
                 implicit val ec = ctx.executionContext

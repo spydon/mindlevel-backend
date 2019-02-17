@@ -34,9 +34,6 @@ trait AbstractRoute {
   protected val accomplishmentPageSize = 20
   protected val challengePageSize = 20
 
-  protected def now(): Long = Instant.now.getEpochSecond*1000
-  protected def timestamp(): Timestamp = new Timestamp(now())
-
   protected implicit object TimestampFormat extends JsonFormat[Timestamp] {
     def write(obj: Timestamp): JsNumber = JsNumber(obj.getTime)
 
@@ -84,9 +81,11 @@ trait AbstractRoute {
 
   protected case class AuthException(msg: String) extends IllegalAccessException(msg)
 
-  protected def sessionId: Directive1[String] = {
+  protected def sessionId(updateLastActive: Boolean = true): Directive1[String] = {
     def isSessionValid(db: Database, session: String): Boolean = {
-      updateLastActiveSession(db, session)
+      if (updateLastActive) {
+        updateLastActiveSession(db, session)
+      }
       import scala.concurrent.duration._
       // TODO: This is going to slow down the backend, refactor
       Await.result(nameFromSession(db, session), 10.second).isDefined
