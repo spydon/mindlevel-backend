@@ -153,93 +153,93 @@ object UserRoute extends AbstractRoute {
                         }
                       }
                   }
-              } ~
-                path("email") {
-                  sessionId() { session =>
-                    get {
-                      onSuccess(isAuthorized(db, username, session)) {
-                        case true =>
-                          val query = db.run(UserExtra.filter(_.username === username).map(_.email).result.headOption)
-                          onSuccess(query)(complete(_))
-                        case false =>
-                          complete(StatusCodes.Unauthorized)
-                      }
-                    }
-                  }
-                } ~
-                path("image") {
-                  sessionId() { session =>
-                    post {
-                      onSuccess(isAuthorized(db, username, session)) {
-                        case true =>
-                          extractRequestContext { ctx =>
-                            implicit val materializer = ctx.materializer
-                            implicit val ec = ctx.executionContext
-                            fileUpload("image") {
-                              case (fileInfo, fileStream) =>
-                                val filename = fileInfo.fileName // TODO: Hash later
-                              val sink = FileIO.toPath(Paths.get("/tmp") resolve filename)
-                                val writeResult = fileStream.runWith(sink)
-                                onSuccess(writeResult) { result =>
-                                  result.status match {
-                                    case Success(_) =>
-                                      val q = for {u <- User if u.username === username} yield u.image
-                                      db.run(q.update(Some(filename))) // Fire and forget
-                                      complete(s"Successfully written ${result.count} bytes")
-                                    case Failure(e) =>
-                                      throw e
-                                  }
-                                }
-                            }
-                          }
-                        case false =>
-                          complete(StatusCodes.Unauthorized)
-                      }
-                    }
-                  }
-                } ~
-                path("accomplishment") {
+              }
+            } ~
+              path("email") {
+                sessionId() { session =>
                   get {
-                    val accomplishments = db.run(UserAccomplishment.filter(_.username === username).flatMap(ua =>
-                      Accomplishment.filter(_.id === ua.accomplishmentId)
-                    ).sortBy(_.created.desc).result)
-                    complete(accomplishments)
-                  }
-                } ~
-                pathPrefix("notification") {
-                  sessionId(false) { session =>
-                    pathEndOrSingleSlash {
-                      get {
-                        val innerJoin = for {
-                          (_, n) <-
-                            NotificationUser.filter(nu => nu.username === username && !nu.seen) join Notification on (_.notificationId === _.id)
-                        } yield n
-
-                        onSuccess(db.run(innerJoin.result)) { notifications =>
-                          complete(notifications)
-                        }
-                      }
-                    } ~
-                      path(IntNumber) { notificationId =>
-                        delete {
-                          onSuccess(isAuthorized(db, username, session)) {
-                            case true =>
-                              val q = for {
-                                nu <- NotificationUser if nu.username === username && nu.notificationId === notificationId
-                              } yield nu.seen
-                              val maybeUpdated = db.run(q.update(true))
-                              onSuccess(maybeUpdated) {
-                                case 0 => complete(StatusCodes.NotFound)
-                                case _ => complete(StatusCodes.OK)
-                              }
-                            case false =>
-                              complete(StatusCodes.Unauthorized)
-                          }
-                        }
-                      }
+                    onSuccess(isAuthorized(db, username, session)) {
+                      case true =>
+                        val query = db.run(UserExtra.filter(_.username === username).map(_.email).result.headOption)
+                        onSuccess(query)(complete(_))
+                      case false =>
+                        complete(StatusCodes.Unauthorized)
+                    }
                   }
                 }
-            }
+              } ~
+              path("image") {
+                sessionId() { session =>
+                  post {
+                    onSuccess(isAuthorized(db, username, session)) {
+                      case true =>
+                        extractRequestContext { ctx =>
+                          implicit val materializer = ctx.materializer
+                          implicit val ec = ctx.executionContext
+                          fileUpload("image") {
+                            case (fileInfo, fileStream) =>
+                              val filename = fileInfo.fileName // TODO: Hash later
+                            val sink = FileIO.toPath(Paths.get("/tmp") resolve filename)
+                              val writeResult = fileStream.runWith(sink)
+                              onSuccess(writeResult) { result =>
+                                result.status match {
+                                  case Success(_) =>
+                                    val q = for {u <- User if u.username === username} yield u.image
+                                    db.run(q.update(Some(filename))) // Fire and forget
+                                    complete(s"Successfully written ${result.count} bytes")
+                                  case Failure(e) =>
+                                    throw e
+                                }
+                              }
+                          }
+                        }
+                      case false =>
+                        complete(StatusCodes.Unauthorized)
+                    }
+                  }
+                }
+              } ~
+              path("accomplishment") {
+                get {
+                  val accomplishments = db.run(UserAccomplishment.filter(_.username === username).flatMap(ua =>
+                    Accomplishment.filter(_.id === ua.accomplishmentId)
+                  ).sortBy(_.created.desc).result)
+                  complete(accomplishments)
+                }
+              } ~
+              pathPrefix("notification") {
+                sessionId(false) { session =>
+                  pathEndOrSingleSlash {
+                    get {
+                      val innerJoin = for {
+                        (_, n) <-
+                          NotificationUser.filter(nu => nu.username === username && !nu.seen) join Notification on (_.notificationId === _.id)
+                      } yield n
+
+                      onSuccess(db.run(innerJoin.result)) { notifications =>
+                        complete(notifications)
+                      }
+                    }
+                  } ~
+                    path(IntNumber) { notificationId =>
+                      delete {
+                        onSuccess(isAuthorized(db, username, session)) {
+                          case true =>
+                            val q = for {
+                              nu <- NotificationUser if nu.username === username && nu.notificationId === notificationId
+                            } yield nu.seen
+                            val maybeUpdated = db.run(q.update(true))
+                            onSuccess(maybeUpdated) {
+                              case 0 => complete(StatusCodes.NotFound)
+                              case _ => complete(StatusCodes.OK)
+                            }
+                          case false =>
+                            complete(StatusCodes.Unauthorized)
+                        }
+                      }
+                    }
+                }
+              }
           }
       }
     }
