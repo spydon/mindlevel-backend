@@ -36,6 +36,12 @@ VALUES (
 
 INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
 VALUES (
+"Cult Interests",
+"Invite a friend to VegLevel, the picture can be of your friend or their/your phone phone for example.",
+"v3_2_cult.jpg", "Community", True, 3);
+
+INSERT INTO challenge (title, description, image, creator, validated, level_restriction)
+VALUES (
 "Fika Time",
 "Fika is a Swedish word for \"a coffee/tea and cake break\" and it is also a lot about socializing.\nSo invite a friend (or stranger) to a vegan fika, you don't have to make the fika yourself but if you want to I can recommend this recipe which the picture is from: https://www.silviacooks.org/nutella-strawberries-tart/",
 "v4_fika.jpg", "Community", True, 4);
